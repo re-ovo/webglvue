@@ -118,7 +118,7 @@ export class PerspectiveCamera {
             this.position = this.target.add(dir);
 
             // 更新摄像机的世界矩阵
-            this.lookAt(this.target, false)
+            this.lookAt(this.target, true)
         } else {
             // Update the camera's rotation based on the mouse delta values
             this.rotation.x += -deltaY * speed;

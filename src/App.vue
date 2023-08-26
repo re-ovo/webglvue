@@ -12,7 +12,9 @@ import {AmbientLight} from "./scene/light/ambient.light.js";
 import {PointLight} from "./scene/light/point.light.js";
 
 const containerRef = ref(null);
-const currentFPS = ref(0)
+
+const currentFPS = ref(0);
+const currentLocation = ref(null)
 
 let gui
 
@@ -21,10 +23,10 @@ onMounted(async () => {
 
   const renderer = new Renderer(containerRef.value, gl)
 
-  const scene = await loadGlb('shotgun_remington_model_31_in_3_types_rigged.glb')
+  const scene = await loadGlb('toyota_chaser_tourerv.glb')
   // scene.rotation.x = -Math.PI / 2
   scene.rotation.y = Math.PI / 2
-  // scene.scale.set(0.1, 0.1, 0.1)
+  scene.scale.set(0.05, 0.05, 0.05)
   scene.updateWorldMatrix()
 
   const camera = new PerspectiveCamera(
@@ -36,7 +38,7 @@ onMounted(async () => {
 
   camera.position.set(0, 0, 5)
   camera.lookAt(new Vec3(0, 0, 0))
-  camera.setTarget(new Vec3(0, 0, 0))
+  // camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
   camera.updateProjectionMatrix()
 
@@ -49,16 +51,16 @@ onMounted(async () => {
   let ambientLight = new AmbientLight()
   let pointLight = new PointLight()
 
-  ambientLight.intensity = 0.5
+  ambientLight.intensity = 0.05
   ambientLight.color.set(1, 1, 1)
 
   directionalLight.position.set(0, 0, 5)
-  directionalLight.intensity = 1.0
+  directionalLight.intensity = 0.75
   directionalLight.color.set(1, 1, 1)
   directionalLight.direction = new Vec3(0, 0, -1)
 
-  pointLight.position.set(0, 5, 2)
-  pointLight.intensity = 1.0
+  pointLight.position.set(2.69, 11.6, 0.14)
+  pointLight.intensity = 0.5
   pointLight.color.set(1, 1, 1)
 
   renderer.lights = [
@@ -71,6 +73,7 @@ onMounted(async () => {
     controls.update()
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
     camera.updateWorldMatrix()
+    currentLocation.value = {...camera.position}
 
     renderer.render(scene, camera)
 
@@ -107,8 +110,12 @@ onMounted(async () => {
   lightFolder.add(directionalLight.direction, 'x', -1, 1).name('平行光方向.X')
   lightFolder.add(directionalLight.direction, 'y', -1, 1).name('平行光方向.Y')
   lightFolder.add(directionalLight.direction, 'z', -1, 1).name('平行光方向.Z')
-  lightFolder.add(directionalLight, 'intensity', 0, 3).name('平行光强度')
-  lightFolder.add(ambientLight, 'intensity', 0, 3).name('环境光强度')
+  lightFolder.add(directionalLight, 'intensity', 0, 100).name('平行光强度')
+  lightFolder.add(ambientLight, 'intensity', 0, 1).name('环境光强度')
+  lightFolder.add(pointLight.position, 'x', -10, 10).name('点光源位置.X')
+  lightFolder.add(pointLight.position, 'y', -10, 10).name('点光源位置.Y')
+  lightFolder.add(pointLight.position, 'z', -10, 10).name('点光源位置.Z')
+  lightFolder.add(pointLight, 'intensity', 0, 3).name('点光源强度')
   lightFolder.open()
 
   const controlsFolder = gui.addFolder('控制器')
@@ -125,7 +132,15 @@ onUnmounted(() => {
 <template>
   <canvas ref="containerRef"/>
   <div class="fps">
-    FPS: {{ currentFPS }}
+    <div style="display: flex; flex-direction: column; gap: 0.2rem">
+      <div>FPS: {{ currentFPS }}</div>
+      <div>
+        相机:
+        <span v-for="(value, key) in currentLocation" :key="key" style="margin-left: 1rem">
+          {{ key }}: {{ value.toFixed(2) }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -135,7 +150,7 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   color: #00ff00;
-  font-size: 20px;
+  font-size: 15px;
   padding: 10px;
 }
 </style>

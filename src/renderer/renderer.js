@@ -1,6 +1,7 @@
 import {createProgram, createShader} from "./setup.js";
 import {DirectionalLight} from "../scene/light/directional.light.js";
 import {AmbientLight} from "../scene/light/ambient.light.js";
+import {showTexture} from "../util/texture.debugger.js";
 
 export class Renderer {
     constructor(canvas, gl) {
@@ -63,6 +64,7 @@ export class Renderer {
 
         // console.log("%crender node", "color: red")
         // console.log(node.material)
+        // console.log(node.envMap)
         // console.log('ao', node.material.aoMap)
         // console.log('map', node.material.map)
         // console.log('metalness', node.material.metalnessMap)
@@ -109,7 +111,7 @@ export class Renderer {
         // set up texture
         let textureColorLocation = gl.getUniformLocation(program, "u_texture")
         let textureNormalLocation = gl.getUniformLocation(program, "u_normalMap")
-        let textureMetalnessLocation = gl.getUniformLocation(program, "u_metalnessMap")
+        let textureMetalnessLocation = gl.getUniformLocation(program, "u_metallicMap")
         let textureRoughnessLocation = gl.getUniformLocation(program, "u_roughnessMap")
         let textureAOLocation = gl.getUniformLocation(program, "u_aoMap")
 
@@ -131,6 +133,7 @@ export class Renderer {
                 gl.bindTexture(gl.TEXTURE_2D, texture)
                 let data = new Uint8Array([255, 0, 0, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
+                console.log('use default ao map')
             }
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureAOLocation, 4)
@@ -145,8 +148,9 @@ export class Renderer {
                 let roughness = node.material.roughness
                 let data = new Uint8Array([0, 255 * roughness, 0, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
+                console.log('use default roughness map: ', roughness)
             }
-            gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.roughnessMap?.image))
+            gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureRoughnessLocation, 3)
         }
 
@@ -159,8 +163,9 @@ export class Renderer {
                 let metalness = node.material.metalness
                 let data = new Uint8Array([0, 0, 255 * metalness, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
+                console.log('use default metalness map: ', metalness)
             }
-            gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.metalnessMap?.image))
+            gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureMetalnessLocation, 2)
         }
 
