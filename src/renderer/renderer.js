@@ -1,19 +1,22 @@
 import {createProgram, createShader} from "./setup.js";
-import {Vec3} from "../math/vec3.js";
-import {im, re} from "mathjs";
+import {DirectionalLight} from "../scene/light/directional.light.js";
+import {AmbientLight} from "../scene/light/ambient.light.js";
 
 export class Renderer {
     constructor(canvas, gl) {
         this.gl = gl
         this.canvas = canvas
 
-        this.lightDirection = new Vec3(0, 1, -1)
+        this.lights = []
 
         this.programs = new Map()
         this.vaos = new Map()
         this.texture = new Map()
     }
 
+    getLight(type) {
+        return this.lights.filter(light => light.constructor.name === type)
+    }
 
     render(scene, camera) {
         const gl = this.gl
@@ -55,11 +58,6 @@ export class Renderer {
         return worldMatrix;
     }
 
-    updateLightDirection(angle) {
-        const rad = angle * Math.PI / 180
-        this.lightDirection = new Vec3(Math.sin(rad), 1, Math.cos(rad))
-    }
-
     renderNode(node, camera) {
         const gl = this.gl
 
@@ -70,6 +68,12 @@ export class Renderer {
         // console.log('metalness', node.material.metalnessMap)
         // console.log('normal', node.material.normalMap)
         // console.log('roughness', node.material.roughnessMap)
+        // showTexture(node.material.map?.image, 'color')
+        // showTexture(node.material.normalMap?.image, 'normal')
+        // showTexture(node.material.aoMap?.image, 'ao (channel R)')
+        // showTexture(node.material.roughnessMap?.image, 'roughness (channel G)')
+        // showTexture(node.material.metalnessMap?.image, 'metalness (channel B)')
+
 
         let program = this.getMaterialProgram(node.material)
         gl.useProgram(program)
@@ -78,14 +82,25 @@ export class Renderer {
         let worldMatrixLocation = gl.getUniformLocation(program, "u_worldMatrix")
         let viewMatrixLocation = gl.getUniformLocation(program, "u_viewMatrix")
         let projectionMatrixLocation = gl.getUniformLocation(program, "u_projectionMatrix")
-        let lightDirectionLocation = gl.getUniformLocation(program, "u_lightDirection")
         let cameraPosLocation = gl.getUniformLocation(program, "u_cameraPos")
         let worldMatrix = this.computeWorldMatrix(node)
         gl.uniformMatrix4fv(worldMatrixLocation, false, worldMatrix.to_opengl_array())
         gl.uniformMatrix4fv(viewMatrixLocation, false, camera.worldMatrixInverse.to_opengl_array())
         gl.uniformMatrix4fv(projectionMatrixLocation, false, camera.projectionMatrix.to_opengl_array())
-        gl.uniform3fv(lightDirectionLocation, this.lightDirection.to_array())
         gl.uniform3fv(cameraPosLocation, camera.position.to_array())
+
+        // set up lights
+        let ambientLight = this.getLight('AmbientLight')[0]
+        gl.uniform3fv(gl.getUniformLocation(program, "u_ambientLight.color"), ambientLight.color.to_array())
+        gl.uniform1f(gl.getUniformLocation(program, "u_ambientLight.intensity"), ambientLight.intensity)
+        let directionalLight = this.getLight('DirectionalLight')[0]
+        gl.uniform3fv(gl.getUniformLocation(program, "u_directionalLight.color"), directionalLight.color.to_array())
+        gl.uniform1f(gl.getUniformLocation(program, "u_directionalLight.intensity"), directionalLight.intensity)
+        gl.uniform3fv(gl.getUniformLocation(program, "u_directionalLight.direction"), directionalLight.direction.to_array())
+        let pointLight = this.getLight('PointLight')[0]
+        gl.uniform3fv(gl.getUniformLocation(program, "u_pointLight.color"), pointLight.color.to_array())
+        gl.uniform1f(gl.getUniformLocation(program, "u_pointLight.intensity"), pointLight.intensity)
+        gl.uniform3fv(gl.getUniformLocation(program, "u_pointLight.position"), pointLight.position.to_array())
 
         // set up vao
         let vao = this.getGeometryVao(program, node.geometry)
@@ -108,20 +123,46 @@ export class Renderer {
         gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.normalMap?.image))
         gl.uniform1i(textureNormalLocation, 1)
 
-        // console.log('set up texture metalness')
-        gl.activeTexture(gl.TEXTURE2)
-        gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.metalnessMap?.image))
-        gl.uniform1i(textureMetalnessLocation, 2)
+        {
+            gl.activeTexture(gl.TEXTURE4)
+            let texture = this.getTexture(node.material.aoMap?.image)
+            if (!texture) {
+                texture = gl.createTexture()
+                gl.bindTexture(gl.TEXTURE_2D, texture)
+                let data = new Uint8Array([255, 0, 0, 255])
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
+            }
+            gl.bindTexture(gl.TEXTURE_2D, texture)
+            gl.uniform1i(textureAOLocation, 4)
+        }
 
-        // console.log('set up texture roughness')
-        gl.activeTexture(gl.TEXTURE3)
-        gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.roughnessMap?.image))
-        gl.uniform1i(textureRoughnessLocation, 3)
+        {
+            gl.activeTexture(gl.TEXTURE3)
+            let texture = this.getTexture(node.material.roughnessMap?.image)
+            if (!texture) {
+                texture = gl.createTexture()
+                gl.bindTexture(gl.TEXTURE_2D, texture)
+                let roughness = node.material.roughness
+                let data = new Uint8Array([0, 255 * roughness, 0, 255])
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
+            }
+            gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.roughnessMap?.image))
+            gl.uniform1i(textureRoughnessLocation, 3)
+        }
 
-        // console.log('set up texture ao')
-        gl.activeTexture(gl.TEXTURE4)
-        gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.aoMap?.image))
-        gl.uniform1i(textureAOLocation, 4)
+        {
+            gl.activeTexture(gl.TEXTURE2)
+            let texture = this.getTexture(node.material.metalnessMap?.image)
+            if (!texture) {
+                texture = gl.createTexture()
+                gl.bindTexture(gl.TEXTURE_2D, texture)
+                let metalness = node.material.metalness
+                let data = new Uint8Array([0, 0, 255 * metalness, 255])
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
+            }
+            gl.bindTexture(gl.TEXTURE_2D, this.getTexture(node.material.metalnessMap?.image))
+            gl.uniform1i(textureMetalnessLocation, 2)
+        }
 
         // draw
         gl.drawElements(gl.TRIANGLES, node.geometry.index.length, gl.UNSIGNED_SHORT, 0);

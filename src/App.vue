@@ -7,6 +7,9 @@ import {PerspectiveCamera} from "./scene/cam.js";
 import {Vec3} from "./math/vec3.js";
 import {GUI} from "dat.gui";
 import {Controls} from "./scene/controls.js";
+import {DirectionalLight} from "./scene/light/directional.light.js";
+import {AmbientLight} from "./scene/light/ambient.light.js";
+import {PointLight} from "./scene/light/point.light.js";
 
 const containerRef = ref(null);
 const currentFPS = ref(0)
@@ -20,6 +23,7 @@ onMounted(async () => {
 
   const scene = await loadGlb('shotgun_remington_model_31_in_3_types_rigged.glb')
   // scene.rotation.x = -Math.PI / 2
+  scene.rotation.y = Math.PI / 2
   // scene.scale.set(0.1, 0.1, 0.1)
   scene.updateWorldMatrix()
 
@@ -30,25 +34,43 @@ onMounted(async () => {
       10000
   )
 
-  camera.position.set(10, 0, 5)
+  camera.position.set(0, 0, 5)
   camera.lookAt(new Vec3(0, 0, 0))
   camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
   camera.updateProjectionMatrix()
 
   const controls = new Controls(containerRef.value, camera)
-  const light = {
-    angle: 0
-  }
 
   let lastFpsUpdateTime = Date.now()
   let frames = 0
+
+  let directionalLight = new DirectionalLight()
+  let ambientLight = new AmbientLight()
+  let pointLight = new PointLight()
+
+  ambientLight.intensity = 0.5
+  ambientLight.color.set(1, 1, 1)
+
+  directionalLight.position.set(0, 0, 5)
+  directionalLight.intensity = 1.0
+  directionalLight.color.set(1, 1, 1)
+  directionalLight.direction = new Vec3(0, 0, -1)
+
+  pointLight.position.set(0, 5, 2)
+  pointLight.intensity = 1.0
+  pointLight.color.set(1, 1, 1)
+
+  renderer.lights = [
+    directionalLight,
+    ambientLight,
+    pointLight,
+  ]
 
   function render() {
     controls.update()
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
     camera.updateWorldMatrix()
-    // renderer.updateLightDirection(light.angle)
 
     renderer.render(scene, camera)
 
@@ -82,10 +104,11 @@ onMounted(async () => {
   sceneFolder.open()
 
   const lightFolder = gui.addFolder('光照')
-  lightFolder.add(light, 'angle', 0, 360).name('光照角度')
-  lightFolder.add(renderer.lightDirection, 'x', -1.0, 1).name('光照方向.X')
-  lightFolder.add(renderer.lightDirection, 'y', -1.0, 1).name('光照方向.Y')
-  lightFolder.add(renderer.lightDirection, 'z', -1.0, 1).name('光照方向.Z')
+  lightFolder.add(directionalLight.direction, 'x', -1, 1).name('平行光方向.X')
+  lightFolder.add(directionalLight.direction, 'y', -1, 1).name('平行光方向.Y')
+  lightFolder.add(directionalLight.direction, 'z', -1, 1).name('平行光方向.Z')
+  lightFolder.add(directionalLight, 'intensity', 0, 3).name('平行光强度')
+  lightFolder.add(ambientLight, 'intensity', 0, 3).name('环境光强度')
   lightFolder.open()
 
   const controlsFolder = gui.addFolder('控制器')

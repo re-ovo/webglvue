@@ -1,4 +1,5 @@
 import vertexShader from '../shader/vertex.glsl?raw'
+// import fragmentShader from '../shader/fragment.glsl?raw'
 import fragmentShader from '../shader/fragment.glsl?raw'
 
 export const DEFAULT_VERTEX_SHADER = vertexShader
