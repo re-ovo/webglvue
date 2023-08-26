@@ -12,6 +12,11 @@ out vec3 v_normal;
 out vec3 v_fragPos;
 out mat4 v_worldMatrix;
 
+// debug
+out float v_depth;
+in vec3 a_barycentric;
+out vec3 v_barycentric;
+
 void main() {
     v_texcoord = a_texcoord;
     v_worldMatrix = u_worldMatrix;
@@ -20,4 +25,8 @@ void main() {
     v_fragPos = vec3(u_worldMatrix * vec4(a_position, 1.0));
 
     gl_Position = u_projectionMatrix * u_viewMatrix * u_worldMatrix * vec4(a_position, 1.0);
+
+    // debug data
+    v_depth = gl_Position.z / gl_Position.w;
+    v_barycentric = a_barycentric;
 }

@@ -23,10 +23,10 @@ onMounted(async () => {
 
   const renderer = new Renderer(containerRef.value, gl)
 
-  const scene = await loadGlb('toyota_chaser_tourerv.glb')
+  const scene = await loadGlb('shotgun_remington_model_31_in_3_types_rigged.glb')
   // scene.rotation.x = -Math.PI / 2
   scene.rotation.y = Math.PI / 2
-  scene.scale.set(0.05, 0.05, 0.05)
+  // scene.scale.set(0.05, 0.05, 0.05)
   scene.updateWorldMatrix()
 
   const camera = new PerspectiveCamera(

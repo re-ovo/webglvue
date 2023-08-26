@@ -133,7 +133,7 @@ export class Renderer {
                 gl.bindTexture(gl.TEXTURE_2D, texture)
                 let data = new Uint8Array([255, 0, 0, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
-                console.log('use default ao map')
+                // console.log('use default ao map')
             }
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureAOLocation, 4)
@@ -148,7 +148,7 @@ export class Renderer {
                 let roughness = node.material.roughness
                 let data = new Uint8Array([0, 255 * roughness, 0, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
-                console.log('use default roughness map: ', roughness)
+                // console.log('use default roughness map: ', roughness)
             }
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureRoughnessLocation, 3)
@@ -163,7 +163,7 @@ export class Renderer {
                 let metalness = node.material.metalness
                 let data = new Uint8Array([0, 0, 255 * metalness, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
-                console.log('use default metalness map: ', metalness)
+                // console.log('use default metalness map: ', metalness)
             }
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureMetalnessLocation, 2)
@@ -206,6 +206,20 @@ export class Renderer {
             gl.enableVertexAttribArray(positionAttributeLocation)
             gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
             gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+
+            let barycentricBuffer = gl.createBuffer()
+            gl.bindBuffer(gl.ARRAY_BUFFER, barycentricBuffer)
+            let barycentric = new Float32Array(geometry.attributes.position.length)
+            geometry.index.forEach((index, i) => {
+                let bary = i % 3 === 0 ? [1, 0, 0] : i % 3 === 1 ? [0, 1, 0] : [0, 0, 1];
+                barycentric.set(bary, index * 3)
+            });
+            gl.bufferData(gl.ARRAY_BUFFER, barycentric, gl.STATIC_DRAW)
+
+            let barycentricAttributeLocation = gl.getAttribLocation(program, "a_barycentric")
+            gl.enableVertexAttribArray(barycentricAttributeLocation)
+            gl.bindBuffer(gl.ARRAY_BUFFER, barycentricBuffer)
+            gl.vertexAttribPointer(barycentricAttributeLocation, 3, gl.FLOAT, false, 0, 0)
 
             // write normal data to buffer
             let normalBuffer = gl.createBuffer()
