@@ -60,6 +60,14 @@ export class Vec3 {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 
+    distance(vector) {
+        return Math.sqrt(
+            Math.pow(this.x - vector.x, 2) +
+            Math.pow(this.y - vector.y, 2) +
+            Math.pow(this.z - vector.z, 2)
+        )
+    }
+
     to_array() {
         return [this.x, this.y, this.z]
     }

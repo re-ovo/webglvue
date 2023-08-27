@@ -11,6 +11,7 @@ export async function loadGlb(path) {
     const loader = new GLTFLoader()
     const gltf = await loader.loadAsync(path)
     const scene = new Scene()
+    console.log(gltf.scene)
     const handleObject = (object, parent) => {
         if (object.isMesh) {
             const material = new ShaderMaterial()
@@ -26,21 +27,25 @@ export async function loadGlb(path) {
             )
 
             const mesh = new Mesh(geometry, material)
-            const objPos = object.position
-            mesh.position.set(objPos.x, objPos.y, objPos.z)
+            mesh.position.set(object.position.x, object.position.y, object.position.z)
+            mesh.rotation.set(object.quaternion.x, object.quaternion.y, object.quaternion.z, object.quaternion.w)
+            mesh.scale.set(object.scale.x, object.scale.y, object.scale.z)
             mesh.updateWorldMatrix()
 
             parent.add(mesh)
-        } else if (object.isGroup || object.isObject3D) {
+        } else if (object.children) {
             const group = new Group()
 
-            const objPos = object.position
-            group.position.set(objPos.x, objPos.y, objPos.z)
+            group.position.set(object.position.x, object.position.y, object.position.z)
+            group.rotation.set(object.quaternion.x, object.quaternion.y, object.quaternion.z, object.quaternion.w)
+            group.scale.set(object.scale.x, object.scale.y, object.scale.z)
             group.updateWorldMatrix()
 
             parent.add(group)
 
             object.children.forEach(child => handleObject(child, group))
+        } else {
+            console.log('Unknown object type')
         }
     }
     handleObject(gltf.scene, scene)

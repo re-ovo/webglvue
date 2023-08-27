@@ -3,26 +3,39 @@ import {Matrix4} from "../math/matrix4.js";
 import transform from "../math/mvp/model.transform.js";
 import {BufferGeometry} from "./geometery.js";
 import {ShaderMaterial} from "./material.js";
+import {Quaternion} from "../math/quaternion.js";
 
 export class Actor {
     constructor() {
         this.position = new Vec3(0, 0, 0)
-        this.rotation = new Vec3(0, 0, 0)
+        this.rotation = new Quaternion(0, 0, 0, 1)
         this.scale = new Vec3(1, 1, 1)
         this.worldMatrix = Matrix4.identity()
         this.updateWorldMatrix()
     }
 
+    rotateX(angle) {
+        this.rotation.rotateX(angle)
+        this.updateWorldMatrix()
+    }
+
+    rotateY(angle) {
+        this.rotation.rotateY(angle)
+        this.updateWorldMatrix()
+    }
+
+    rotateZ(angle) {
+        this.rotation.rotateZ(angle)
+        this.updateWorldMatrix()
+    }
+
     updateWorldMatrix() {
-        const xRotationMatrix = transform.xRotation(this.rotation.x)
-        const yRotationMatrix = transform.yRotation(this.rotation.y)
-        const zRotationMatrix = transform.zRotation(this.rotation.z)
+        const rotationMatrix = this.rotation.toMatrix4()
         const translationMatrix = transform.translation(
             this.position.x,
             this.position.y,
             this.position.z
         )
-        const rotationMatrix = zRotationMatrix.mul(yRotationMatrix).mul(xRotationMatrix)
         const scaleMatrix = transform.scale(
             this.scale.x,
             this.scale.y,

@@ -24,9 +24,7 @@ onMounted(async () => {
 
   const renderer = new Renderer(containerRef.value, gl)
 
-  const scene = await loadGlb('shotgun_remington_model_31_in_3_types_rigged.glb')
-  // scene.rotation.x = -Math.PI / 2
-  scene.rotation.y = Math.PI / 2
+  const scene = await loadGlb('ship_in_a_bottle.glb')
   // scene.scale.set(0.05, 0.05, 0.05)
   scene.updateWorldMatrix()
 
@@ -36,7 +34,7 @@ onMounted(async () => {
   cube.material.metalness = 1
   cube.position.set(0, -2, 2)
   cube.scale.set(10, 0.01, 10)
-  scene.add(cube)
+  // scene.add(cube)
 
   const camera = new PerspectiveCamera(
       60,
