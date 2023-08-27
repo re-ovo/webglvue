@@ -28,6 +28,7 @@ uniform sampler2D u_metallicMap;
 uniform sampler2D u_roughnessMap;
 uniform sampler2D u_aoMap;
 uniform bool u_useNormalMap;
+uniform float u_opacity;
 
 uniform vec3 u_cameraPos;
 
@@ -170,5 +171,5 @@ void main() {
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/GAMMA));
 
-    outColor = vec4(color, 1.0);
+    outColor = vec4(color, u_opacity);
 }

@@ -27,18 +27,31 @@ export class Renderer {
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
         gl.enable(gl.DEPTH_TEST)
         gl.enable(gl.CULL_FACE)
 
         let stack = [scene]
+        let opaque = []
+        let transparent = []
 
         while (stack.length > 0) {
             let node = stack.pop()
 
             // Render Mesh
             node.updateWorldMatrix()
+
+            // if (node.material && node.geometry) {
+            //     this.renderNode(node, camera)
+            // }
             if (node.material && node.geometry) {
-                this.renderNode(node, camera)
+                if (node.material.opacity === 1) {
+                    opaque.push(node)
+                } else {
+                    transparent.push(node)
+                }
             }
 
             if (node.children) {
@@ -47,6 +60,23 @@ export class Renderer {
                 }
             }
         }
+
+        // 先渲染不透明的物体
+        for (let i = 0; i < opaque.length; i++) {
+            this.renderNode(opaque[i], camera)
+        }
+
+        // 再渲染透明的物体
+        gl.depthMask(false) // 暂时关闭深度写入，防止透明物体遮挡后面的物体
+        transparent.sort((a, b) => {
+            let aDistance = a.position.distance(camera.position)
+            let bDistance = b.position.distance(camera.position)
+            return bDistance - aDistance
+        })
+        for (let i = 0; i < transparent.length; i++) {
+            this.renderNode(transparent[i], camera)
+        }
+        gl.depthMask(true)
     }
 
     computeWorldMatrix(node) {
@@ -54,6 +84,7 @@ export class Renderer {
         let parent = node.parent;
         while (parent) {
             worldMatrix = parent.worldMatrix.mul(worldMatrix);
+            // worldMatrix = worldMatrix.mul(parent.worldMatrix)
             parent = parent.parent;
         }
         return worldMatrix;
@@ -75,7 +106,7 @@ export class Renderer {
         // showTexture(node.material.aoMap?.image, 'ao (channel R)')
         // showTexture(node.material.roughnessMap?.image, 'roughness (channel G)')
         // showTexture(node.material.metalnessMap?.image, 'metalness (channel B)')
-
+        // console.log('opacity', node.material.opacity)
 
         let program = this.getMaterialProgram(node.material)
         gl.useProgram(program)
@@ -87,11 +118,13 @@ export class Renderer {
         let cameraPosLocation = gl.getUniformLocation(program, "u_cameraPos")
         let useNormalMapLocation = gl.getUniformLocation(program, "u_useNormalMap")
         let worldMatrix = this.computeWorldMatrix(node)
+        let opacityLocation = gl.getUniformLocation(program, "u_opacity")
         gl.uniformMatrix4fv(worldMatrixLocation, false, worldMatrix.to_opengl_array())
         gl.uniformMatrix4fv(viewMatrixLocation, false, camera.worldMatrixInverse.to_opengl_array())
         gl.uniformMatrix4fv(projectionMatrixLocation, false, camera.projectionMatrix.to_opengl_array())
         gl.uniform3fv(cameraPosLocation, camera.position.to_array())
         gl.uniform1i(useNormalMapLocation, node.material.normalMap ? 1 : 0)
+        gl.uniform1f(opacityLocation, node.material.opacity)
 
         // set up lights
         let ambientLight = this.getLight('AmbientLight')[0]
@@ -128,7 +161,6 @@ export class Renderer {
                     g: node.material.color?.y ?? 1,
                     b: node.material.color?.z ?? 1,
                 }
-                console.log(node.material.color)
                 let data = new Uint8Array([255 * color.r, 255 * color.g, 255 * color.b, 255])
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
             }
@@ -139,9 +171,9 @@ export class Renderer {
         {
             gl.activeTexture(gl.TEXTURE1)
             let texture = this.getTexture(node.material.normalMap?.image)
-            if (!texture) {
-                console.log('use default normal map')
-            }
+            // if (!texture) {
+            //     console.log('use default normal map')
+            // }
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(textureNormalLocation, 1)
         }
@@ -192,6 +224,10 @@ export class Renderer {
 
         // draw
         gl.drawElements(gl.TRIANGLES, node.geometry.index.length, gl.UNSIGNED_SHORT, 0);
+    }
+
+    getShadowMap(scene, camera) {
+        // TODO: 从光源的角度渲染场景，生成深度贴图
     }
 
     getMaterialProgram(material) {
