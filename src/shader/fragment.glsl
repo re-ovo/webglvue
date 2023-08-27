@@ -27,6 +27,7 @@ uniform sampler2D u_normalMap;
 uniform sampler2D u_metallicMap;
 uniform sampler2D u_roughnessMap;
 uniform sampler2D u_aoMap;
+uniform bool u_useNormalMap;
 
 uniform vec3 u_cameraPos;
 
@@ -82,6 +83,10 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 }
 
 vec3 getNormal() {
+    if (!u_useNormalMap) {
+        return normalize(v_normal);
+    }
+
     vec3 q0 = dFdx(v_fragPos);
     vec3 q1 = dFdy(v_fragPos);
     vec2 st0 = dFdx(v_texcoord);
@@ -99,6 +104,8 @@ vec3 getNormal() {
     mat3 tbn = mat3(T * scale, B * scale, N);
     return normalize(tbn * (texture(u_normalMap, v_texcoord).rgb * 2.0 - 1.0));
 }
+
+in float v_depth;
 
 void main() {
     vec3 albedo = pow(texture(u_texture, v_texcoord).rgb, vec3(GAMMA));

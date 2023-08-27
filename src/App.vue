@@ -10,6 +10,7 @@ import {Controls} from "./scene/controls.js";
 import {DirectionalLight} from "./scene/light/directional.light.js";
 import {AmbientLight} from "./scene/light/ambient.light.js";
 import {PointLight} from "./scene/light/point.light.js";
+import {Cube} from "./scene/actor.js";
 
 const containerRef = ref(null);
 
@@ -28,6 +29,14 @@ onMounted(async () => {
   scene.rotation.y = Math.PI / 2
   // scene.scale.set(0.05, 0.05, 0.05)
   scene.updateWorldMatrix()
+
+  const cube = new Cube()
+  cube.material.color = new Vec3(1, 1, 1)
+  cube.material.roughness = 0.5
+  cube.material.metalness = 1
+  cube.position.set(0, -2, 2)
+  cube.scale.set(10, 0.01, 10)
+  scene.add(cube)
 
   const camera = new PerspectiveCamera(
       60,
@@ -57,7 +66,7 @@ onMounted(async () => {
   directionalLight.position.set(0, 0, 5)
   directionalLight.intensity = 0.75
   directionalLight.color.set(1, 1, 1)
-  directionalLight.direction = new Vec3(0, 0, -1)
+  directionalLight.direction = new Vec3(0, -1, -1)
 
   pointLight.position.set(2.69, 11.6, 0.14)
   pointLight.intensity = 0.5
