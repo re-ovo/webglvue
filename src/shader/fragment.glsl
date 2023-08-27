@@ -171,5 +171,6 @@ void main() {
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/GAMMA));
 
-    outColor = vec4(color, u_opacity);
+    float texture_opacity = texture(u_texture, v_texcoord).a;
+    outColor = vec4(color, texture_opacity * u_opacity);
 }

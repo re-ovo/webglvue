@@ -24,7 +24,7 @@ onMounted(async () => {
 
   const renderer = new Renderer(containerRef.value, gl)
 
-  const scene = await loadGlb('ship_in_a_bottle.glb')
+  const scene = await loadGlb('subway_entrance__street_assets_vol._01.glb')
   // scene.scale.set(0.05, 0.05, 0.05)
   scene.updateWorldMatrix()
 
@@ -43,7 +43,7 @@ onMounted(async () => {
       10000
   )
 
-  camera.position.set(0, 0, 5)
+  camera.position.set(0, 5, 5)
   camera.lookAt(new Vec3(0, 0, 0))
   // camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
@@ -91,7 +91,6 @@ onMounted(async () => {
       lastFpsUpdateTime = now
       frames = 0
     }
-
     requestAnimationFrame(render)
   }
 
