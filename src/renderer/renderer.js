@@ -43,11 +43,8 @@ export class Renderer {
             // Render Mesh
             node.updateWorldMatrix()
 
-            // if (node.material && node.geometry) {
-            //     this.renderNode(node, camera)
-            // }
             if (node.material && node.geometry) {
-                if (node.material.opacity === 1) {
+                if (node.material.opacity === 1 || node.material.opacity === undefined) {
                     opaque.push(node)
                 } else {
                     transparent.push(node)
@@ -124,7 +121,7 @@ export class Renderer {
         gl.uniformMatrix4fv(projectionMatrixLocation, false, camera.projectionMatrix.to_opengl_array())
         gl.uniform3fv(cameraPosLocation, camera.position.to_array())
         gl.uniform1i(useNormalMapLocation, node.material.normalMap ? 1 : 0)
-        gl.uniform1f(opacityLocation, node.material.opacity)
+        gl.uniform1f(opacityLocation, node.material.opacity ?? 1)
 
         // set up lights
         let ambientLight = this.getLight('AmbientLight')[0]
@@ -264,19 +261,18 @@ export class Renderer {
             gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
             gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0)
 
-
-            let barycentricBuffer = gl.createBuffer()
-            gl.bindBuffer(gl.ARRAY_BUFFER, barycentricBuffer)
-            let barycentric = new Float32Array(geometry.attributes.position.length)
-            geometry.index.forEach((index, i) => {
-                let bary = i % 3 === 0 ? [1, 0, 0] : i % 3 === 1 ? [0, 1, 0] : [0, 0, 1];
-                barycentric.set(bary, index * 3)
-            });
-            gl.bufferData(gl.ARRAY_BUFFER, barycentric, gl.STATIC_DRAW)
-            let barycentricAttributeLocation = gl.getAttribLocation(program, "a_barycentric")
-            gl.enableVertexAttribArray(barycentricAttributeLocation)
-            gl.bindBuffer(gl.ARRAY_BUFFER, barycentricBuffer)
-            gl.vertexAttribPointer(barycentricAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+            // let barycentricBuffer = gl.createBuffer()
+            // gl.bindBuffer(gl.ARRAY_BUFFER, barycentricBuffer)
+            // let barycentric = new Float32Array(geometry.attributes.position.length)
+            // geometry.index.forEach((index, i) => {
+            //     let bary = i % 3 === 0 ? [1, 0, 0] : i % 3 === 1 ? [0, 1, 0] : [0, 0, 1];
+            //     barycentric.set(bary, index * 3)
+            // });
+            // gl.bufferData(gl.ARRAY_BUFFER, barycentric, gl.STATIC_DRAW)
+            // let barycentricAttributeLocation = gl.getAttribLocation(program, "a_barycentric")
+            // gl.enableVertexAttribArray(barycentricAttributeLocation)
+            // gl.bindBuffer(gl.ARRAY_BUFFER, barycentricBuffer)
+            // gl.vertexAttribPointer(barycentricAttributeLocation, 3, gl.FLOAT, false, 0, 0)
 
 
             // write normal data to buffer
@@ -300,12 +296,10 @@ export class Renderer {
             gl.vertexAttribPointer(textureAttributeLocation, 2, gl.FLOAT, false, 0, 0)
 
             // index
-            if (geometry.index) {
-                let indexBuffer = gl.createBuffer()
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-                // Warning: 这里需要使用Uint16Array，WebGL只支持Uint16Array和Uint8Array（默认）
-                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(geometry.index), gl.STATIC_DRAW)
-            }
+            let indexBuffer = gl.createBuffer()
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+            // Warning: 这里需要使用Uint16Array，WebGL只支持Uint16Array和Uint8Array（默认）
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(geometry.index), gl.STATIC_DRAW)
 
             this.vaos.set(geometry, vao)
         }

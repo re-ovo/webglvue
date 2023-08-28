@@ -14,21 +14,6 @@ export class Actor {
         this.updateWorldMatrix()
     }
 
-    rotateX(angle) {
-        this.rotation.rotateX(angle)
-        this.updateWorldMatrix()
-    }
-
-    rotateY(angle) {
-        this.rotation.rotateY(angle)
-        this.updateWorldMatrix()
-    }
-
-    rotateZ(angle) {
-        this.rotation.rotateZ(angle)
-        this.updateWorldMatrix()
-    }
-
     updateWorldMatrix() {
         const rotationMatrix = this.rotation.toMatrix4()
         const translationMatrix = transform.translation(
@@ -42,6 +27,23 @@ export class Actor {
             this.scale.z
         )
         this.worldMatrix = translationMatrix.mul(rotationMatrix).mul(scaleMatrix)
+    }
+
+    lookAt(target) {
+        const direction = target.subtract(this.position).normalize()
+        const up = new Vec3(0, 1, 0)
+
+        const right = up.cross(direction).normalize()
+        const newUp = direction.cross(right)
+
+        const rotationMatrix = new Matrix4([
+            right.x, newUp.x, direction.x, 0,
+            right.y, newUp.y, direction.y, 0,
+            right.z, newUp.z, direction.z, 0,
+            0, 0, 0, 1
+        ])
+
+        this.rotation = Quaternion.fromMatrix4(rotationMatrix)
     }
 }
 
@@ -134,6 +136,37 @@ export class Cube extends Mesh {
                         -1.0, 0.0, 0.0,
                         -1.0, 0.0, 0.0,
                         -1.0, 0.0, 0.0,
+                    ]),
+                    uv: new Float32Array([
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
+                        0.0, 0.0,
                     ]),
                 },
                 new Uint16Array([

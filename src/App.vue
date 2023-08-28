@@ -11,6 +11,7 @@ import {DirectionalLight} from "./scene/light/directional.light.js";
 import {AmbientLight} from "./scene/light/ambient.light.js";
 import {PointLight} from "./scene/light/point.light.js";
 import {Cube} from "./scene/actor.js";
+import {Quaternion} from "./math/quaternion.js";
 
 const containerRef = ref(null);
 
@@ -24,17 +25,20 @@ onMounted(async () => {
 
   const renderer = new Renderer(containerRef.value, gl)
 
-  const scene = await loadGlb('subway_entrance__street_assets_vol._01.glb')
+  const scene = await loadGlb('unused_blue_vans_shoe.glb')
   // scene.scale.set(0.05, 0.05, 0.05)
   scene.updateWorldMatrix()
 
   const cube = new Cube()
-  cube.material.color = new Vec3(1, 1, 1)
+  cube.material.color = new Vec3(1, 0, 0)
   cube.material.roughness = 0.5
   cube.material.metalness = 1
-  cube.position.set(0, -2, 2)
-  cube.scale.set(10, 0.01, 10)
+  cube.position.set(0, 0, 0)
+  cube.scale.set(1, 1, 1)
+  cube.lookAt(new Vec3(0, 1, 1))
+  cube.updateWorldMatrix()
   // scene.add(cube)
+
 
   const camera = new PerspectiveCamera(
       60,
@@ -78,8 +82,12 @@ onMounted(async () => {
 
   function render() {
     controls.update()
+
+    scene.rotation = Quaternion.fromEuler(new Vec3(0, 0.01, 0)).multiply(scene.rotation)
+
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
     camera.updateWorldMatrix()
+
     currentLocation.value = {...camera.position}
 
     renderer.render(scene, camera)

@@ -44,6 +44,14 @@ export class Vec3 {
         )
     }
 
+    negate() {
+        return new Vec3(
+            -this.x,
+            -this.y,
+            -this.z
+        )
+    }
+
     dot(vector) {
         return this.x * vector.x + this.y * vector.y + this.z * vector.z
     }
