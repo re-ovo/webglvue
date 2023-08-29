@@ -10,30 +10,54 @@ export class Quaternion {
     }
 
     static fromEuler(euler) {
-        const x = euler.x, y = euler.y, z = euler.z
-        const cos = Math.cos
-        const sin = Math.sin
-        const c1 = cos(x / 2)
-        const c2 = cos(y / 2)
-        const c3 = cos(z / 2)
-        const s1 = sin(x / 2)
-        const s2 = sin(y / 2)
-        const s3 = sin(z / 2)
-        return new Quaternion(
-            s1 * c2 * c3 + c1 * s2 * s3,
-            c1 * s2 * c3 - s1 * c2 * s3,
-            c1 * c2 * s3 + s1 * s2 * c3,
-            c1 * c2 * c3 - s1 * s2 * s3
-        )
+        const c1 = Math.cos(euler.x / 2);
+        const c2 = Math.cos(euler.y / 2);
+        const c3 = Math.cos(euler.z / 2);
+
+        const s1 = Math.sin(euler.x / 2);
+        const s2 = Math.sin(euler.y / 2);
+        const s3 = Math.sin(euler.z / 2);
+
+        const _x = s1 * c2 * c3 + c1 * s2 * s3;
+        const _y = c1 * s2 * c3 - s1 * c2 * s3;
+        const _z = c1 * c2 * s3 + s1 * s2 * c3;
+        const _w = c1 * c2 * c3 - s1 * s2 * s3;
+
+        return new Quaternion(_x, _y, _z, _w);
     }
 
-    static fromMatrix4(matrix) {
-        const w = Math.sqrt(1 + matrix.get(0, 0) + matrix.get(1, 1) + matrix.get(2, 2)) / 2
-        const w4 = (4 * w)
-        const x = (matrix.get(2, 1) - matrix.get(1, 2)) / w4
-        const y = (matrix.get(0, 2) - matrix.get(2, 0)) / w4
-        const z = (matrix.get(1, 0) - matrix.get(0, 1)) / w4
-        return new Quaternion(x, y, z, w)
+    // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+    static fromRotationMatrix4(matrix) {
+        const trace = matrix.get(0, 0) + matrix.get(1, 1) + matrix.get(2, 2);
+        let w, x, y, z;
+
+        if (trace > 0) {
+            const s = 0.5 / Math.sqrt(trace + 1.0);
+            w = 0.25 / s;
+            x = (matrix.get(2, 1) - matrix.get(1, 2)) * s;
+            y = (matrix.get(0, 2) - matrix.get(2, 0)) * s;
+            z = (matrix.get(1, 0) - matrix.get(0, 1)) * s;
+        } else if ((matrix.get(0, 0) > matrix.get(1, 1)) && (matrix.get(0, 0) > matrix.get(2, 2))) {
+            const s = 2.0 * Math.sqrt(1.0 + matrix.get(0, 0) - matrix.get(1, 1) - matrix.get(2, 2));
+            w = (matrix.get(2, 1) - matrix.get(1, 2)) / s;
+            x = 0.25 * s;
+            y = (matrix.get(0, 1) + matrix.get(1, 0)) / s;
+            z = (matrix.get(0, 2) + matrix.get(2, 0)) / s;
+        } else if (matrix.get(1, 1) > matrix.get(2, 2)) {
+            const s = 2.0 * Math.sqrt(1.0 + matrix.get(1, 1) - matrix.get(0, 0) - matrix.get(2, 2));
+            w = (matrix.get(0, 2) - matrix.get(2, 0)) / s;
+            x = (matrix.get(0, 1) + matrix.get(1, 0)) / s;
+            y = 0.25 * s;
+            z = (matrix.get(1, 2) + matrix.get(2, 1)) / s;
+        } else {
+            const s = 2.0 * Math.sqrt(1.0 + matrix.get(2, 2) - matrix.get(0, 0) - matrix.get(1, 1));
+            w = (matrix.get(1, 0) - matrix.get(0, 1)) / s;
+            x = (matrix.get(0, 2) + matrix.get(2, 0)) / s;
+            y = (matrix.get(1, 2) + matrix.get(2, 1)) / s;
+            z = 0.25 * s;
+        }
+
+        return new Quaternion(x, y, z, w);
     }
 
     set(x, y, z, w) {
@@ -64,37 +88,41 @@ export class Quaternion {
     }
 
     setFromEuler(euler) {
-        const x = euler.x, y = euler.y, z = euler.z
-        const cos = Math.cos
-        const sin = Math.sin
-        const c1 = cos(x / 2)
-        const c2 = cos(y / 2)
-        const c3 = cos(z / 2)
-        const s1 = sin(x / 2)
-        const s2 = sin(y / 2)
-        const s3 = sin(z / 2)
-        this.x = s1 * c2 * c3 + c1 * s2 * s3
-        this.y = c1 * s2 * c3 - s1 * c2 * s3
-        this.z = c1 * c2 * s3 + s1 * s2 * c3
-        this.w = c1 * c2 * c3 - s1 * s2 * s3
+        const cy = Math.cos(euler.z * 0.5);
+        const sy = Math.sin(euler.z * 0.5);
+        const cp = Math.cos(euler.y * 0.5);
+        const sp = Math.sin(euler.y * 0.5);
+        const cr = Math.cos(euler.x * 0.5);
+        const sr = Math.sin(euler.x * 0.5);
+
+        this.w = cy * cp * cr + sy * sp * sr;
+        this.x = cy * cp * sr - sy * sp * cr;
+        this.y = sy * cp * sr + cy * sp * cr;
+        this.z = sy * cp * cr - cy * sp * sr;
+
         return this
     }
 
     toEuler() {
-        const x = this.x, y = this.y, z = this.z, w = this.w
-        const cos = Math.cos
-        const sin = Math.sin
-        const euler = new Vec3()
-        const c1 = cos(x / 2)
-        const c2 = cos(y / 2)
-        const c3 = cos(z / 2)
-        const s1 = sin(x / 2)
-        const s2 = sin(y / 2)
-        const s3 = sin(z / 2)
-        euler.x = Math.atan2(2 * (w * s1 * s2 * c3 + c1 * c2 * s3), 1 - 2 * (s1 * s1 * c2 * c2 + c1 * c1 * s3 * s3))
-        euler.y = Math.asin(2 * (w * c1 * c2 * s3 - s1 * s2 * c3))
-        euler.z = Math.atan2(2 * (w * s1 * c2 * s3 + c1 * s2 * c3), 1 - 2 * (s1 * s1 * s2 * s2 + c1 * c1 * c3 * c3))
-        return euler
+        let roll, pitch, yaw;
+        let test = this.x * this.y + this.z * this.w;
+        if (test > 0.499) { // singularity at north pole
+            roll = 2 * Math.atan2(this.x, this.w);
+            pitch = Math.PI / 2;
+            yaw = 0;
+        } else if (test < -0.499) { // singularity at south pole
+            roll = -2 * Math.atan2(this.x, this.w);
+            pitch = -Math.PI / 2;
+            yaw = 0;
+        } else {
+            let sqx = this.x * this.x;
+            let sqy = this.y * this.y;
+            let sqz = this.z * this.z;
+            roll = Math.atan2(2 * this.y * this.w - 2 * this.x * this.z, 1 - 2 * sqy - 2 * sqz);
+            pitch = Math.asin(2 * test);
+            yaw = Math.atan2(2 * this.x * this.w - 2 * this.y * this.z, 1 - 2 * sqx - 2 * sqz);
+        }
+        return new Vec3(roll, pitch, yaw)
     }
 
     length() {

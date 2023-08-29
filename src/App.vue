@@ -27,7 +27,7 @@ onMounted(async () => {
   const renderer = new Renderer(containerRef.value, gl)
   const scene = new Scene();
 
-  const model = await loadGlb('unused_blue_vans_shoe.glb')
+  const model = await loadGlb('ship_in_a_bottle.glb')
   scene.add(model)
 
   const cube = new Cube()
@@ -35,10 +35,10 @@ onMounted(async () => {
   cube.material.roughness = 0.5
   cube.material.metalness = 1
   cube.position.set(0, 0, 0)
-  cube.scale.set(1, 1, 1)
+  cube.scale.set(0.5, 0.5, 1)
   cube.lookAt(new Vec3(0, 1, 1))
   cube.updateWorldMatrix()
-  // scene.add(cube)
+  scene.add(cube)
 
   const camera = new PerspectiveCamera(
       60,
@@ -47,7 +47,7 @@ onMounted(async () => {
       10000
   )
 
-  camera.position.set(0, 5, 5)
+  camera.position.set(0, 2, 5)
   camera.lookAt(new Vec3(0, 0, 0))
   // camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
@@ -84,6 +84,7 @@ onMounted(async () => {
     controls.update()
 
     // scene.rotation = Quaternion.fromEuler(new Vec3(0, 0.01, 0)).multiply(scene.rotation)
+    cube.lookAt(camera.position)
 
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
     camera.updateWorldMatrix()

@@ -1,21 +1,29 @@
 import {Vec3} from "../math/vec3.js";
 import projection from "../math/mvp/projection.js";
-import transform from "../math/mvp/model.transform.js";
 import {degToRad} from "three/src/math/MathUtils.js";
+import {Actor} from "./actor.js";
+import {Quaternion} from "../math/quaternion.js";
 
-export class PerspectiveCamera {
+export class PerspectiveCamera extends Actor {
     constructor(fov, aspect, near, far) {
+        super()
+
         this.fov = fov;
         this.aspect = aspect;
         this.near = near;
         this.far = far;
 
-        this.position = new Vec3(0, 0, 0)
-        this.rotation = new Vec3(0, 0, 0)
-        this.target = null
-
         this.updateProjectionMatrix()
         this.updateWorldMatrix()
+    }
+
+    lookAt(target) {
+        let direction = target.subtract(this.position).normalize();
+        let newTarget = this.position.add(direction.negate());
+
+        // Actor的lookAt默认朝向Z+轴，而摄像机默认朝向Z-轴，所以需要基于摄像机
+        // 的位置进行反转
+        super.lookAt(newTarget);
     }
 
     updateAspectRatio(aspect) {
@@ -40,30 +48,8 @@ export class PerspectiveCamera {
         )
     }
 
-    lookAt(target, update = true) {
-        const dir = target.subtract(this.position).normalize()
-        const x = Math.asin(dir.y)
-        const y = -Math.atan2(dir.x, -dir.z)
-        this.rotation = new Vec3(x, y, 0)
-        if (update) this.updateWorldMatrix()
-    }
-
-    setTarget(target) {
-        this.target = target
-        this.lookAt(target)
-    }
-
     updateWorldMatrix() {
-        const xRotationMatrix = transform.xRotation(this.rotation.x)
-        const yRotationMatrix = transform.yRotation(this.rotation.y)
-        const zRotationMatrix = transform.zRotation(this.rotation.z)
-        const translationMatrix = transform.translation(
-            this.position.x,
-            this.position.y,
-            this.position.z
-        )
-        const rotationMatrix = zRotationMatrix.mul(yRotationMatrix).mul(xRotationMatrix)
-        this.worldMatrix = translationMatrix.mul(rotationMatrix)
+        super.updateWorldMatrix()
         this.worldMatrixInverse = this.worldMatrix.inverse()
     }
 
@@ -73,15 +59,16 @@ export class PerspectiveCamera {
         // forward, strafe in [-1, 0, 1]
         // forward: 1 = forward, -1 = backward, 0 = none
         // strafe: 1 = right, -1 = left, 0 = none
+        const rotation = this.rotation.toEuler()
         const forwardVec = new Vec3(
-            -Math.sin(this.rotation.y),
+            -Math.sin(rotation.y),
             0,
-            -Math.cos(this.rotation.y)
+            -Math.cos(rotation.y)
         );
         const rightVec = new Vec3(
-            Math.cos(this.rotation.y),
+            Math.cos(rotation.y),
             0,
-            -Math.sin(this.rotation.y)
+            -Math.sin(rotation.y)
         );
 
         this.position.x += forward * forwardVec.x * speed + strafe * rightVec.x * speed
@@ -99,30 +86,13 @@ export class PerspectiveCamera {
 
     rotate(deltaX, deltaY, speed = 0.01) {
         if (this.target) {
-            // 计算摄像机位置与目标点之间的向量
-            let dir = this.position.subtract(this.target);
-
-            // 计算旋转角度
-            let angleX = -deltaY * speed;
-            let angleY = -deltaX * speed;
-
-            // 创建旋转矩阵
-            let rotationMatrixX = transform.xRotation(angleX);
-            let rotationMatrixY = transform.yRotation(angleY);
-
-            // 对向量进行旋转
-            dir = rotationMatrixX.mulVec3(dir);
-            dir = rotationMatrixY.mulVec3(dir);
-
-            // 更新摄像机位置
-            this.position = this.target.add(dir);
-
-            // 更新摄像机的世界矩阵
-            this.lookAt(this.target, true)
+            // TODO: Implement
         } else {
             // Update the camera's rotation based on the mouse delta values
-            this.rotation.x += -deltaY * speed;
-            this.rotation.y += -deltaX * speed;
+            let quant = Quaternion.fromEuler(
+                new Vec3(-deltaY * speed, -deltaX * speed, 0)
+            )
+            this.rotation = quant.multiply(this.rotation)
 
             // Update the camera's world matrix
             this.updateWorldMatrix();

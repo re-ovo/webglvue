@@ -8,7 +8,7 @@ import {Quaternion} from "../math/quaternion.js";
 export class Actor {
     constructor() {
         this.position = new Vec3(0, 0, 0)
-        this.rotation = new Quaternion(0, 0, 0, 1)
+        this.rotation = new Quaternion()
         this.scale = new Vec3(1, 1, 1)
         this.worldMatrix = Matrix4.identity()
         this.updateWorldMatrix()
@@ -31,19 +31,26 @@ export class Actor {
 
     lookAt(target) {
         const direction = target.subtract(this.position).normalize()
+
+        if (direction.x === 0 && direction.z === 0) {
+            if (direction.y > 0) {
+                this.rotation = new Quaternion(1, 0, 0, 0)
+            } else {
+                this.rotation = new Quaternion(0, 0, 1, 0)
+            }
+            return
+        }
+
         const up = new Vec3(0, 1, 0)
-
         const right = up.cross(direction).normalize()
-        const newUp = direction.cross(right)
-
+        const newUp = direction.cross(right).normalize()
         const rotationMatrix = new Matrix4([
             right.x, newUp.x, direction.x, 0,
             right.y, newUp.y, direction.y, 0,
             right.z, newUp.z, direction.z, 0,
-            0, 0, 0, 1
+            0, 0, 0, 1,
         ])
-
-        this.rotation = Quaternion.fromMatrix4(rotationMatrix)
+        this.rotation = Quaternion.fromRotationMatrix4(rotationMatrix)
     }
 }
 
