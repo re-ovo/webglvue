@@ -12,6 +12,7 @@ import {AmbientLight} from "./scene/light/ambient.light.js";
 import {PointLight} from "./scene/light/point.light.js";
 import {Cube} from "./scene/actor.js";
 import {Quaternion} from "./math/quaternion.js";
+import {Scene} from "./scene/group.js";
 
 const containerRef = ref(null);
 
@@ -24,10 +25,10 @@ onMounted(async () => {
   const gl = setupGL(containerRef.value)
 
   const renderer = new Renderer(containerRef.value, gl)
+  const scene = new Scene();
 
-  const scene = await loadGlb('unused_blue_vans_shoe.glb')
-  // scene.scale.set(0.05, 0.05, 0.05)
-  scene.updateWorldMatrix()
+  const model = await loadGlb('unused_blue_vans_shoe.glb')
+  scene.add(model)
 
   const cube = new Cube()
   cube.material.color = new Vec3(1, 0, 0)
@@ -38,7 +39,6 @@ onMounted(async () => {
   cube.lookAt(new Vec3(0, 1, 1))
   cube.updateWorldMatrix()
   // scene.add(cube)
-
 
   const camera = new PerspectiveCamera(
       60,
@@ -83,7 +83,7 @@ onMounted(async () => {
   function render() {
     controls.update()
 
-    scene.rotation = Quaternion.fromEuler(new Vec3(0, 0.01, 0)).multiply(scene.rotation)
+    // scene.rotation = Quaternion.fromEuler(new Vec3(0, 0.01, 0)).multiply(scene.rotation)
 
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
     camera.updateWorldMatrix()
@@ -112,9 +112,6 @@ onMounted(async () => {
   cameraFolder.open()
 
   const sceneFolder = gui.addFolder('场景')
-  sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI).name('场景旋转.X')
-  sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI).name('场景旋转.Y')
-  sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI).name('场景旋转.Z')
   sceneFolder.add(scene.scale, 'x', 0.1, 2).name('场景缩放.X')
   sceneFolder.add(scene.scale, 'y', 0.1, 2).name('场景缩放.Y')
   sceneFolder.add(scene.scale, 'z', 0.1, 2).name('场景缩放.Z')
