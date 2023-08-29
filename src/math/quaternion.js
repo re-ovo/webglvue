@@ -104,25 +104,28 @@ export class Quaternion {
     }
 
     toEuler() {
-        let roll, pitch, yaw;
-        let test = this.x * this.y + this.z * this.w;
-        if (test > 0.499) { // singularity at north pole
-            roll = 2 * Math.atan2(this.x, this.w);
-            pitch = Math.PI / 2;
-            yaw = 0;
-        } else if (test < -0.499) { // singularity at south pole
-            roll = -2 * Math.atan2(this.x, this.w);
-            pitch = -Math.PI / 2;
-            yaw = 0;
+        const euler = new Vec3()
+        const x = this.x, y = this.y, z = this.z, w = this.w
+        const test = x * y + z * w
+        if (test > 0.499) {
+            euler.y = 2 * Math.atan2(x, w)
+            euler.z = Math.PI / 2
+            euler.x = 0
+            return euler
+        } else if (test < -0.499) {
+            euler.y = -2 * Math.atan2(x, w)
+            euler.z = -Math.PI / 2
+            euler.x = 0
+            return euler
         } else {
-            let sqx = this.x * this.x;
-            let sqy = this.y * this.y;
-            let sqz = this.z * this.z;
-            roll = Math.atan2(2 * this.y * this.w - 2 * this.x * this.z, 1 - 2 * sqy - 2 * sqz);
-            pitch = Math.asin(2 * test);
-            yaw = Math.atan2(2 * this.x * this.w - 2 * this.y * this.z, 1 - 2 * sqx - 2 * sqz);
+            const sqx = x * x
+            const sqy = y * y
+            const sqz = z * z
+            euler.y = Math.atan2(2 * y * w - 2 * x * z, 1 - 2 * sqy - 2 * sqz)
+            euler.z = Math.asin(2 * test)
+            euler.x = Math.atan2(2 * x * w - 2 * y * z, 1 - 2 * sqx - 2 * sqz)
+            return euler
         }
-        return new Vec3(roll, pitch, yaw)
     }
 
     length() {

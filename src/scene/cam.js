@@ -2,7 +2,6 @@ import {Vec3} from "../math/vec3.js";
 import projection from "../math/mvp/projection.js";
 import {degToRad} from "three/src/math/MathUtils.js";
 import {Actor} from "./actor.js";
-import {Quaternion} from "../math/quaternion.js";
 
 export class PerspectiveCamera extends Actor {
     constructor(fov, aspect, near, far) {
@@ -53,6 +52,16 @@ export class PerspectiveCamera extends Actor {
         this.worldMatrixInverse = this.worldMatrix.inverse()
     }
 
+    rotate(deltaX, deltaY, speed = 0.01) {
+        let x = -deltaY * speed
+        let y = -deltaX * speed
+        let euler = this.rotation.toEuler()
+        euler.x += x
+        euler.y += y
+        this.rotation.setFromEuler(euler)
+        this.updateWorldMatrix()
+    }
+
     move(forward, strafe, speed) {
         if (forward === 0 && strafe === 0) return
 
@@ -82,20 +91,5 @@ export class PerspectiveCamera extends Actor {
         if (delta === 0) return
         this.position.y += delta
         this.updateWorldMatrix()
-    }
-
-    rotate(deltaX, deltaY, speed = 0.01) {
-        if (this.target) {
-            // TODO: Implement
-        } else {
-            // Update the camera's rotation based on the mouse delta values
-            let quant = Quaternion.fromEuler(
-                new Vec3(-deltaY * speed, -deltaX * speed, 0)
-            )
-            this.rotation = quant.multiply(this.rotation)
-
-            // Update the camera's world matrix
-            this.updateWorldMatrix();
-        }
     }
 }
