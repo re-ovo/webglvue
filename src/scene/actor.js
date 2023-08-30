@@ -64,128 +64,164 @@ export class Mesh extends Actor {
 
 export class Cube extends Mesh {
     constructor() {
-        super(
-            new BufferGeometry(
-                {
-                    // For cube, we do not use index buffer
-                    // 6 faces, 2 triangles each, 3 vertices each
-                    // 6 * 2 * 3 = 36
-                    position: new Float32Array([
-                        // Front face
-                        -1.0, -1.0, 1.0,
-                        1.0, -1.0, 1.0,
-                        1.0, 1.0, 1.0,
-                        -1.0, 1.0, 1.0,
+        const geometry = new BufferGeometry(
+            {
+                // For cube, we do not use index buffer
+                // 6 faces, 2 triangles each, 3 vertices each
+                // 6 * 2 * 3 = 36
+                position: new Float32Array([
+                    // Front face
+                    -1.0, -1.0, 1.0,
+                    1.0, -1.0, 1.0,
+                    1.0, 1.0, 1.0,
+                    -1.0, 1.0, 1.0,
 
-                        // Back face
-                        -1.0, -1.0, -1.0,
-                        -1.0, 1.0, -1.0,
-                        1.0, 1.0, -1.0,
-                        1.0, -1.0, -1.0,
+                    // Back face
+                    -1.0, -1.0, -1.0,
+                    -1.0, 1.0, -1.0,
+                    1.0, 1.0, -1.0,
+                    1.0, -1.0, -1.0,
 
-                        // Top face
-                        -1.0, 1.0, -1.0,
-                        -1.0, 1.0, 1.0,
-                        1.0, 1.0, 1.0,
-                        1.0, 1.0, -1.0,
+                    // Top face
+                    -1.0, 1.0, -1.0,
+                    -1.0, 1.0, 1.0,
+                    1.0, 1.0, 1.0,
+                    1.0, 1.0, -1.0,
 
-                        // Bottom face
-                        -1.0, -1.0, -1.0,
-                        1.0, -1.0, -1.0,
-                        1.0, -1.0, 1.0,
-                        -1.0, -1.0, 1.0,
+                    // Bottom face
+                    -1.0, -1.0, -1.0,
+                    1.0, -1.0, -1.0,
+                    1.0, -1.0, 1.0,
+                    -1.0, -1.0, 1.0,
 
-                        // Right face
-                        1.0, -1.0, -1.0,
-                        1.0, 1.0, -1.0,
-                        1.0, 1.0, 1.0,
-                        1.0, -1.0, 1.0,
+                    // Right face
+                    1.0, -1.0, -1.0,
+                    1.0, 1.0, -1.0,
+                    1.0, 1.0, 1.0,
+                    1.0, -1.0, 1.0,
 
-                        // Left face
-                        -1.0, -1.0, -1.0,
-                        -1.0, -1.0, 1.0,
-                        -1.0, 1.0, 1.0,
-                        -1.0, 1.0, -1.0,
-                    ]),
-                    normal: new Float32Array([ // 8 normals
-                        // Front face
-                        0.0, 0.0, 1.0,
-                        0.0, 0.0, 1.0,
-                        0.0, 0.0, 1.0,
-                        0.0, 0.0, 1.0,
-
-                        // Back face
-                        0.0, 0.0, -1.0,
-                        0.0, 0.0, -1.0,
-                        0.0, 0.0, -1.0,
-                        0.0, 0.0, -1.0,
-
-                        // Top face
-                        0.0, 1.0, 0.0,
-                        0.0, 1.0, 0.0,
-                        0.0, 1.0, 0.0,
-                        0.0, 1.0, 0.0,
-
-                        // Bottom face
-                        0.0, -1.0, 0.0,
-                        0.0, -1.0, 0.0,
-                        0.0, -1.0, 0.0,
-                        0.0, -1.0, 0.0,
-
-                        // Right face
-                        1.0, 0.0, 0.0,
-                        1.0, 0.0, 0.0,
-                        1.0, 0.0, 0.0,
-                        1.0, 0.0, 0.0,
-
-                        // Left face
-                        -1.0, 0.0, 0.0,
-                        -1.0, 0.0, 0.0,
-                        -1.0, 0.0, 0.0,
-                        -1.0, 0.0, 0.0,
-                    ]),
-                    uv: new Float32Array([
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                        0.0, 0.0,
-                    ]),
-                },
-                new Uint16Array([
-                    0, 1, 2, 0, 2, 3,    // front
-                    4, 5, 6, 4, 6, 7,    // back
-                    8, 9, 10, 8, 10, 11,   // top
-                    12, 13, 14, 12, 14, 15,   // bottom
-                    16, 17, 18, 16, 18, 19,   // right
-                    20, 21, 22, 20, 22, 23,   // left
+                    // Left face
+                    -1.0, -1.0, -1.0,
+                    -1.0, -1.0, 1.0,
+                    -1.0, 1.0, 1.0,
+                    -1.0, 1.0, -1.0,
                 ]),
-            ),
-            new ShaderMaterial(),
+                normal: new Float32Array([ // 8 normals
+                    // Front face
+                    0.0, 0.0, 1.0,
+                    0.0, 0.0, 1.0,
+                    0.0, 0.0, 1.0,
+                    0.0, 0.0, 1.0,
+
+                    // Back face
+                    0.0, 0.0, -1.0,
+                    0.0, 0.0, -1.0,
+                    0.0, 0.0, -1.0,
+                    0.0, 0.0, -1.0,
+
+                    // Top face
+                    0.0, 1.0, 0.0,
+                    0.0, 1.0, 0.0,
+                    0.0, 1.0, 0.0,
+                    0.0, 1.0, 0.0,
+
+                    // Bottom face
+                    0.0, -1.0, 0.0,
+                    0.0, -1.0, 0.0,
+                    0.0, -1.0, 0.0,
+                    0.0, -1.0, 0.0,
+
+                    // Right face
+                    1.0, 0.0, 0.0,
+                    1.0, 0.0, 0.0,
+                    1.0, 0.0, 0.0,
+                    1.0, 0.0, 0.0,
+
+                    // Left face
+                    -1.0, 0.0, 0.0,
+                    -1.0, 0.0, 0.0,
+                    -1.0, 0.0, 0.0,
+                    -1.0, 0.0, 0.0,
+                ]),
+                uv: new Float32Array([
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    0.0, 0.0,
+
+                    0.1, 0.0,
+                    0.1, 0.0,
+                    0.1, 0.0,
+                    0.1, 0.0,
+
+                    0.2, 0.0,
+                    0.2, 0.0,
+                    0.2, 0.0,
+                    0.2, 0.0,
+
+                    0.3, 0.0,
+                    0.3, 0.0,
+                    0.3, 0.0,
+                    0.3, 0.0,
+
+                    0.4, 0.0,
+                    0.4, 0.0,
+                    0.4, 0.0,
+                    0.4, 0.0,
+
+                    0.5, 0.0,
+                    0.5, 0.0,
+                    0.5, 0.0,
+                    0.5, 0.0,
+                ]),
+            },
+            new Uint16Array([
+                0, 1, 2, 0, 2, 3,    // front
+                4, 5, 6, 4, 6, 7,    // back
+                8, 9, 10, 8, 10, 11,   // top
+                12, 13, 14, 12, 14, 15,   // bottom
+                16, 17, 18, 16, 18, 19,   // right
+                20, 21, 22, 20, 22, 23,   // left
+            ]),
+        )
+        const material = new ShaderMaterial()
+        material.roughness = 0
+        material.metalness = 1
+
+        const canvas = document.createElement('canvas')
+        canvas.width = 256
+        canvas.height = 256
+        const context = canvas.getContext('2d')
+
+        context.fillStyle = '#ffffff'
+        context.fillRect(0, 0, 256, 256)
+
+        context.fillStyle = '#ff0000'
+        context.fillRect(0, 0, 25.6, 25.6)
+
+        context.fillStyle = '#00ff00'
+        context.fillRect(25.6, 0, 25.6, 25.6)
+
+        context.fillStyle = '#0000ff'
+        context.fillRect(25.6 * 2, 0, 25.6, 25.6)
+
+        context.fillStyle = '#ffff00'
+        context.fillRect(25.6 * 3, 0, 25.6, 25.6)
+
+        context.fillStyle = '#00ffff'
+        context.fillRect(25.6 * 4, 0, 25.6, 25.6)
+
+        context.fillStyle = '#ff00ff'
+        context.fillRect(25.6 * 5, 0, 25.6, 25.6)
+
+        const bitmap = createImageBitmap(canvas).then((bitmap) => {
+            material.map = {
+                image: bitmap,
+            }
+        })
+        super(
+            geometry,
+            material,
         )
     }
 }
