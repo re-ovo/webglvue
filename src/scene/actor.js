@@ -32,6 +32,7 @@ export class Actor {
     lookAt(target) {
         const direction = target.subtract(this.position).normalize()
 
+        // Edge case: direction is up or down
         if (direction.x === 0 && direction.z === 0) {
             if (direction.y > 0) {
                 this.rotation = new Quaternion(1, 0, 0, 0)

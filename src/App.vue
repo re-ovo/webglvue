@@ -3,7 +3,7 @@ import {onMounted, onUnmounted, ref} from "vue";
 import {setupGL} from "./renderer/setup.js";
 import {Renderer} from "./renderer/renderer.js";
 import {loadGlb} from "./loader/glb.loader.js";
-import {PerspectiveCamera} from "./scene/cam.js";
+import {OrthographicCamera, PerspectiveCamera} from "./scene/cam.js";
 import {Vec3} from "./math/vec3.js";
 import {GUI} from "dat.gui";
 import {Controls} from "./scene/controls.js";
@@ -28,14 +28,14 @@ onMounted(async () => {
   const scene = new Scene();
 
   const model = await loadGlb('unused_blue_vans_shoe.glb')
-  // scene.add(model)
+  scene.add(model)
 
   const cube = new Cube()
   // cube.material.color = new Vec3(1, 0, 0)
   cube.material.roughness = 0.5
   cube.material.metalness = 1
   cube.position.set(0, 0, 0)
-  // cube.scale.set(0.5, 0.5, 1)
+  cube.scale.set(5, 0.1, 5)
   // cube.lookAt(new Vec3(0, 1, 1))
   cube.updateWorldMatrix()
   scene.add(cube)
@@ -46,8 +46,9 @@ onMounted(async () => {
       0.1,
       10000
   )
+  // const camera = new OrthographicCamera()
 
-  camera.position.set(0, 2, 5)
+  camera.position.set(15, 0, 0)
   camera.lookAt(new Vec3(0, 0, 0))
   // camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
@@ -68,7 +69,7 @@ onMounted(async () => {
   directionalLight.position.set(0, 0, 5)
   directionalLight.intensity = 0.75
   directionalLight.color.set(1, 1, 1)
-  directionalLight.direction = new Vec3(0, -1, -1)
+  directionalLight.direction = new Vec3(0, -1, 1)
 
   pointLight.position.set(2.69, 11.6, 0.14)
   pointLight.intensity = 0.5
@@ -85,6 +86,8 @@ onMounted(async () => {
 
     // scene.rotation = Quaternion.fromEuler(new Vec3(0, 0.01, 0)).multiply(scene.rotation)
     // cube.lookAt(camera.position)
+    // console.log(camera.getDirection())
+    // directionalLight.direction = camera.getDirection()
 
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
     camera.updateWorldMatrix()

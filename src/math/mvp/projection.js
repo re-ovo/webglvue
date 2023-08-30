@@ -2,11 +2,20 @@ import {Matrix4} from "../matrix4.js";
 
 export default {
     // 正交投影
-    orthographic(width, height, depth) {
+    orthographic(left, right, top, bottom, near, far) {
+        const w = 1.0 / (right - left);
+        const h = 1.0 / (top - bottom);
+        const p = 1.0 / (far - near);
+
+        const x = (right + left) * w;
+        const y = (top + bottom) * h;
+        const z = (far + near) * p;
+        const zInv = -2 * p;
+
         return new Matrix4([
-            2 / width, 0, 0, -1,
-            0, -2 / height, 0, 1,
-            0, 0, 2 / depth, -1,
+            2 * w, 0, 0, -x,
+            0, 2 * h, 0, -y,
+            0, 0, zInv, -z,
             0, 0, 0, 1
         ])
     },
