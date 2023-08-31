@@ -44,7 +44,7 @@ export class Renderer {
             node.updateWorldMatrix()
 
             if (node.material && node.geometry) {
-                if (node.material.opacity === 1 || node.material.opacity === undefined) {
+                if (node.material.transparent === false || node.material.transparent === undefined) {
                     opaque.push(node)
                 } else {
                     transparent.push(node)

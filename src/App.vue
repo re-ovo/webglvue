@@ -27,7 +27,7 @@ onMounted(async () => {
   const renderer = new Renderer(containerRef.value, gl)
   const scene = new Scene();
 
-  const model = await loadGlb('unused_blue_vans_shoe.glb')
+  const model = await loadGlb('sofa_combination.glb')
   scene.add(model)
 
   const cube = new Cube()
