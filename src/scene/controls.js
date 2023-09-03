@@ -82,6 +82,13 @@ export class Controls {
                     break
             }
         })
+
+        document.addEventListener('wheel', (e) => {
+            this.forward = e.deltaY > 0 ? -1 : 1
+            setTimeout(() => {
+                this.forward = 0
+            }, 100)
+        })
     }
 
     update() {

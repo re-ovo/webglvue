@@ -1,7 +1,10 @@
 import {createProgram, createShader} from "./setup.js";
 import {DirectionalLight} from "../scene/light/directional.light.js";
 import {AmbientLight} from "../scene/light/ambient.light.js";
-import {showTexture} from "../util/texture.debugger.js";
+import {OrthographicCamera} from "../scene/camera/orthographic.camera.js";
+import {Vec3} from "../math/vec3.js";
+import {Matrix4} from "../math/matrix4.js";
+import {PerspectiveCamera} from "../scene/camera/perspective.camera.js";
 
 export class Renderer {
     constructor(canvas, gl) {
@@ -22,8 +25,73 @@ export class Renderer {
     render(scene, camera) {
         const gl = this.gl
 
-        gl.viewport(0, 0, this.canvas.width, this.canvas.height)
+        const directionalLightCam = new OrthographicCamera()
+        directionalLightCam.updateSize(20, 20)
+        directionalLightCam.position = new Vec3(15, 3, 3)
+        directionalLightCam.lookAt(new Vec3(0, 0, 0))
+        directionalLightCam.updateWorldMatrix()
+        directionalLightCam.updateProjectionMatrix()
 
+        const depthTextureSize = 1024
+        const depthTexture = gl.createTexture()
+        gl.bindTexture(gl.TEXTURE_2D, depthTexture)
+        gl.texImage2D(
+            gl.TEXTURE_2D, // 目标
+            0, // 贴图级别
+            gl.DEPTH_COMPONENT32F, // 内部格式
+            depthTextureSize, // 宽
+            depthTextureSize, // 高
+            0, // 边框
+            gl.DEPTH_COMPONENT, // 格式
+            gl.FLOAT, // 类型
+            null
+        )
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+        const depthFramebuffer = gl.createFramebuffer()
+        gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer)
+        gl.framebufferTexture2D(
+            gl.FRAMEBUFFER, // 目标
+            gl.DEPTH_ATTACHMENT, // 附着点
+            gl.TEXTURE_2D, // 纹理目标
+            depthTexture, // 纹理
+            0
+        )
+
+        // 渲染shadow map
+        this.preparePass({
+            width: depthTextureSize,
+            height: depthTextureSize,
+        })
+        this.depthTexture = null
+        this.depthTextureMatrix = null
+        // gl.cullFace(gl.FRONT)
+        this.render0(scene, directionalLightCam)
+        // gl.cullFace(gl.BACK)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+
+        this.depthTexture = depthTexture
+        this.depthTextureMatrix = directionalLightCam.projectionMatrix.mul(directionalLightCam.worldMatrixInverse)
+
+        // 正式渲染
+        this.preparePass({
+            width: this.canvas.width,
+            height: this.canvas.height
+        })
+        this.render0(scene, camera)
+
+        // 清理shadow map相关资源
+        gl.deleteTexture(depthTexture)
+        gl.deleteFramebuffer(depthFramebuffer)
+    }
+
+    preparePass(viewportSize) {
+        const gl = this.gl
+
+        gl.viewport(0, 0, viewportSize.width, viewportSize.height)
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -32,6 +100,10 @@ export class Renderer {
 
         gl.enable(gl.DEPTH_TEST)
         gl.enable(gl.CULL_FACE)
+    }
+
+    render0(scene, camera) {
+        const gl = this.gl
 
         let stack = [scene]
         let opaque = []
@@ -112,6 +184,7 @@ export class Renderer {
         let worldMatrixLocation = gl.getUniformLocation(program, "u_worldMatrix")
         let viewMatrixLocation = gl.getUniformLocation(program, "u_viewMatrix")
         let projectionMatrixLocation = gl.getUniformLocation(program, "u_projectionMatrix")
+        let shadowMatrixLocation = gl.getUniformLocation(program, "u_shadowMatrix")
         let cameraPosLocation = gl.getUniformLocation(program, "u_cameraPos")
         let useNormalMapLocation = gl.getUniformLocation(program, "u_useNormalMap")
         let worldMatrix = this.computeWorldMatrix(node)
@@ -119,6 +192,7 @@ export class Renderer {
         gl.uniformMatrix4fv(worldMatrixLocation, false, worldMatrix.to_opengl_array())
         gl.uniformMatrix4fv(viewMatrixLocation, false, camera.worldMatrixInverse.to_opengl_array())
         gl.uniformMatrix4fv(projectionMatrixLocation, false, camera.projectionMatrix.to_opengl_array())
+        gl.uniformMatrix4fv(shadowMatrixLocation, false, this.depthTextureMatrix?.to_opengl_array() ?? Matrix4.identity().to_opengl_array())
         gl.uniform3fv(cameraPosLocation, camera.position.to_array())
         gl.uniform1i(useNormalMapLocation, node.material.normalMap ? 1 : 0)
         gl.uniform1f(opacityLocation, node.material.opacity ?? 1)
@@ -146,6 +220,7 @@ export class Renderer {
         let textureMetalnessLocation = gl.getUniformLocation(program, "u_metallicMap")
         let textureRoughnessLocation = gl.getUniformLocation(program, "u_roughnessMap")
         let textureAOLocation = gl.getUniformLocation(program, "u_aoMap")
+        let depthTextureLocation = gl.getUniformLocation(program, "u_depthMap")
 
         {
             gl.activeTexture(gl.TEXTURE0)
@@ -219,12 +294,14 @@ export class Renderer {
             gl.uniform1i(textureMetalnessLocation, 2)
         }
 
+        {
+            gl.activeTexture(gl.TEXTURE6)
+            gl.bindTexture(gl.TEXTURE_2D, this.depthTexture)
+            gl.uniform1i(depthTextureLocation, 6)
+        }
+
         // draw
         gl.drawElements(gl.TRIANGLES, node.geometry.index.length, gl.UNSIGNED_SHORT, 0);
-    }
-
-    getShadowMap(scene, camera) {
-        // TODO: 从光源的角度渲染场景，生成深度贴图
     }
 
     getMaterialProgram(material) {

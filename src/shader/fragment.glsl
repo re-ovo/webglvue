@@ -29,9 +29,12 @@ uniform sampler2D u_roughnessMap;
 uniform sampler2D u_aoMap;
 uniform bool u_useNormalMap;
 uniform float u_opacity;
+uniform sampler2D u_depthMap;
 
+// 相机位置
 uniform vec3 u_cameraPos;
 
+// 光照信息
 uniform AmbientLight u_ambientLight;
 uniform PointLight u_pointLight;
 uniform DirectionalLight u_directionalLight;
@@ -40,6 +43,7 @@ in vec2 v_texcoord;
 in vec3 v_normal;
 in vec3 v_fragPos;
 in mat4 v_worldMatrix;
+in vec4 v_shadowTexcoord;
 
 out vec4 outColor;
 
@@ -106,9 +110,36 @@ vec3 getNormal() {
     return normalize(tbn * (texture(u_normalMap, v_texcoord).rgb * 2.0 - 1.0));
 }
 
-in float v_depth;
+#define SHADOW_BIAS 0.0001
+#define PCF_SIZE 1
+float PCF() {
+    vec3 shadowCoord = v_shadowTexcoord.xyz / v_shadowTexcoord.w;
+    shadowCoord = shadowCoord * 0.5 + 0.5;
+    bool inShdowRange = shadowCoord.x >= 0.0 && shadowCoord.x <= 1.0 && shadowCoord.y >= 0.0 && shadowCoord.y <= 1.0;
+    if (!inShdowRange) {
+        return 1.0;
+    }
+
+    float shadow = 0.0;
+    float texelSize = 1.0 / 1024.0;
+    for (int x = -PCF_SIZE; x <= PCF_SIZE; ++x) {
+        for (int y = -PCF_SIZE; y <= PCF_SIZE; ++y) {
+            float pcfDepth = texture(u_depthMap, shadowCoord.xy + vec2(x, y) * texelSize).r;
+            shadow += shadowCoord.z - SHADOW_BIAS > pcfDepth ? 0.0 : 1.0;
+        }
+    }
+    return shadow / 9.0;
+}
 
 void main() {
+    //    vec3 shadowCoord = v_shadowTexcoord.xyz / v_shadowTexcoord.w;
+    //    shadowCoord = shadowCoord * 0.5 + 0.5;
+    //    float minDepth = texture(u_depthMap, shadowCoord.xy).r;
+    //    float currentDepth = shadowCoord.z;
+    //    bool inShdowRange = shadowCoord.x >= 0.0 && shadowCoord.x <= 1.0 && shadowCoord.y >= 0.0 && shadowCoord.y <= 1.0;
+    //    float shadow = inShdowRange && currentDepth > minDepth + SHADOW_BIAS ? 0.0 : 1.0;
+    float shadow = PCF();
+
     vec3 albedo = pow(texture(u_texture, v_texcoord).rgb, vec3(GAMMA));
     float ao = texture(u_aoMap, v_texcoord).r;
     float roughness = texture(u_roughnessMap, v_texcoord).g;
@@ -166,12 +197,11 @@ void main() {
     }
 
     vec3 ambient = u_ambientLight.color * u_ambientLight.intensity * albedo * ao;
-    vec3 color = ambient + Lo;
+    vec3 color = ambient + Lo * shadow;
 
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/GAMMA));
 
     float texture_opacity = texture(u_texture, v_texcoord).a;
-    // float texture_opacity = 1.0;
     outColor = vec4(color, texture_opacity * u_opacity);
 }

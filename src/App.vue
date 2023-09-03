@@ -3,7 +3,6 @@ import {onMounted, onUnmounted, ref} from "vue";
 import {setupGL} from "./renderer/setup.js";
 import {Renderer} from "./renderer/renderer.js";
 import {loadGlb} from "./loader/glb.loader.js";
-import {OrthographicCamera, PerspectiveCamera} from "./scene/cam.js";
 import {Vec3} from "./math/vec3.js";
 import {GUI} from "dat.gui";
 import {Controls} from "./scene/controls.js";
@@ -11,8 +10,9 @@ import {DirectionalLight} from "./scene/light/directional.light.js";
 import {AmbientLight} from "./scene/light/ambient.light.js";
 import {PointLight} from "./scene/light/point.light.js";
 import {Cube} from "./scene/actor.js";
-import {Quaternion} from "./math/quaternion.js";
 import {Scene} from "./scene/group.js";
+import {OrthographicCamera} from "./scene/camera/orthographic.camera.js";
+import {PerspectiveCamera} from "./scene/camera/perspective.camera.js";
 
 const containerRef = ref(null);
 
@@ -27,17 +27,25 @@ onMounted(async () => {
   const renderer = new Renderer(containerRef.value, gl)
   const scene = new Scene();
 
-  const model = await loadGlb('sofa_combination.glb')
-  scene.add(model)
+  const model = await loadGlb('ship_in_a_bottle.glb')
+  // scene.add(model)
+
+  const floor = new Cube()
+  // cube.material.color = new Vec3(1, 0, 0)
+  floor.material.roughness = 0.5
+  floor.material.metalness = 1
+  floor.position.set(0, 0, 0)
+  floor.scale.set(5, 0.01, 5)
+  // cube.lookAt(new Vec3(0, 1, 1))
+  floor.updateWorldMatrix()
+  scene.add(floor)
 
   const cube = new Cube()
-  // cube.material.color = new Vec3(1, 0, 0)
-  cube.material.roughness = 0.5
+  cube.material.color = new Vec3(1, 0, 0)
+  cube.material.roughness = 0.1
   cube.material.metalness = 1
   cube.position.set(0, 0, 0)
-  cube.scale.set(5, 0.1, 5)
-  // cube.lookAt(new Vec3(0, 1, 1))
-  cube.updateWorldMatrix()
+  cube.scale.set(0.5, 0.5, 0.5)
   scene.add(cube)
 
   const camera = new PerspectiveCamera(
@@ -47,8 +55,13 @@ onMounted(async () => {
       10000
   )
   // const camera = new OrthographicCamera()
+  // camera.left = -2
+  // camera.right = 2
+  // camera.top = 2
+  // camera.bottom = -2
+  // camera.updateProjectionMatrix()
 
-  camera.position.set(15, 0, 0)
+  camera.position.set(15, 3, 3)
   camera.lookAt(new Vec3(0, 0, 0))
   // camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
@@ -109,16 +122,19 @@ onMounted(async () => {
   render()
 
   gui = new GUI()
-  const cameraFolder = gui.addFolder('相机位置')
+  const cameraFolder = gui.addFolder('相机')
   cameraFolder.add(camera.position, 'x', -100, 100)
   cameraFolder.add(camera.position, 'y', -100, 100)
   cameraFolder.add(camera.position, 'z', -100, 100)
   cameraFolder.open()
 
   const sceneFolder = gui.addFolder('场景')
-  sceneFolder.add(scene.scale, 'x', 0.1, 2).name('场景缩放.X')
-  sceneFolder.add(scene.scale, 'y', 0.1, 2).name('场景缩放.Y')
-  sceneFolder.add(scene.scale, 'z', 0.1, 2).name('场景缩放.Z')
+  sceneFolder.add(cube.position, 'x', -10, 10).name('立方体位置.X')
+  sceneFolder.add(cube.position, 'y', -10, 10).name('立方体位置.Y')
+  sceneFolder.add(cube.position, 'z', -10, 10).name('立方体位置.Z')
+  sceneFolder.add(model.position, 'x', -10, 10).name('模型位置.X')
+  sceneFolder.add(model.position, 'y', -10, 10).name('模型位置.Y')
+  sceneFolder.add(model.position, 'z', -10, 10).name('模型位置.Z')
   sceneFolder.open()
 
   const lightFolder = gui.addFolder('光照')

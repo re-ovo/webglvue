@@ -145,35 +145,35 @@ export class Cube extends Mesh {
                     -1.0, 0.0, 0.0,
                 ]),
                 uv: new Float32Array([
-                    0.0, 0.0,
-                    0.0, 0.0,
-                    0.0, 0.0,
-                    0.0, 0.0,
+                    0.001, 0.0,
+                    0.001, 0.0,
+                    0.001, 0.0,
+                    0.001, 0.0,
 
-                    0.1, 0.0,
-                    0.1, 0.0,
-                    0.1, 0.0,
-                    0.1, 0.0,
+                    0.101, 0.0,
+                    0.101, 0.0,
+                    0.101, 0.0,
+                    0.101, 0.0,
 
-                    0.2, 0.0,
-                    0.2, 0.0,
-                    0.2, 0.0,
-                    0.2, 0.0,
+                    0.201, 0.0,
+                    0.201, 0.0,
+                    0.201, 0.0,
+                    0.201, 0.0,
 
-                    0.3, 0.0,
-                    0.3, 0.0,
-                    0.3, 0.0,
-                    0.3, 0.0,
+                    0.301, 0.0,
+                    0.301, 0.0,
+                    0.301, 0.0,
+                    0.301, 0.0,
 
-                    0.4, 0.0,
-                    0.4, 0.0,
-                    0.4, 0.0,
-                    0.4, 0.0,
+                    0.401, 0.0,
+                    0.401, 0.0,
+                    0.401, 0.0,
+                    0.401, 0.0,
 
-                    0.5, 0.0,
-                    0.5, 0.0,
-                    0.5, 0.0,
-                    0.5, 0.0,
+                    0.501, 0.0,
+                    0.501, 0.0,
+                    0.501, 0.0,
+                    0.501, 0.0,
                 ]),
             },
             new Uint16Array([
@@ -194,9 +194,6 @@ export class Cube extends Mesh {
         canvas.height = 256
         const context = canvas.getContext('2d')
 
-        context.fillStyle = '#ffffff'
-        context.fillRect(0, 0, 256, 256)
-
         context.fillStyle = '#ff0000'
         context.fillRect(0, 0, 25.6, 25.6)
 
@@ -212,10 +209,10 @@ export class Cube extends Mesh {
         context.fillStyle = '#00ffff'
         context.fillRect(25.6 * 4, 0, 25.6, 25.6)
 
-        context.fillStyle = '#ff00ff'
+        context.fillStyle = '#e5903b'
         context.fillRect(25.6 * 5, 0, 25.6, 25.6)
 
-        const bitmap = createImageBitmap(canvas).then((bitmap) => {
+        createImageBitmap(canvas).then((bitmap) => {
             material.map = {
                 image: bitmap,
             }
