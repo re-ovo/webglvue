@@ -13,6 +13,7 @@ import {Cube} from "./scene/actor.js";
 import {Scene} from "./scene/group.js";
 import {OrthographicCamera} from "./scene/camera/orthographic.camera.js";
 import {PerspectiveCamera} from "./scene/camera/perspective.camera.js";
+import {re} from "mathjs";
 
 const containerRef = ref(null);
 
@@ -27,8 +28,9 @@ onMounted(async () => {
   const renderer = new Renderer(containerRef.value, gl)
   const scene = new Scene();
 
-  const model = await loadGlb('ship_in_a_bottle.glb')
-  // scene.add(model)
+  const model = await loadGlb('sofa_combination.glb')
+  model.scale.set(0.01, 0.01, 0.01)
+  scene.add(model)
 
   const floor = new Cube()
   // cube.material.color = new Vec3(1, 0, 0)
@@ -38,7 +40,7 @@ onMounted(async () => {
   floor.scale.set(5, 0.01, 5)
   // cube.lookAt(new Vec3(0, 1, 1))
   floor.updateWorldMatrix()
-  scene.add(floor)
+  // scene.add(floor)
 
   const cube = new Cube()
   cube.material.color = new Vec3(1, 0, 0)
@@ -46,7 +48,7 @@ onMounted(async () => {
   cube.material.metalness = 1
   cube.position.set(0, 0, 0)
   cube.scale.set(0.5, 0.5, 0.5)
-  scene.add(cube)
+  // scene.add(cube)
 
   const camera = new PerspectiveCamera(
       60,
@@ -147,6 +149,24 @@ onMounted(async () => {
   lightFolder.add(pointLight.position, 'y', -10, 10).name('点光源位置.Y')
   lightFolder.add(pointLight.position, 'z', -10, 10).name('点光源位置.Z')
   lightFolder.add(pointLight, 'intensity', 0, 3).name('点光源强度')
+  lightFolder.add(renderer.directionalLightCam.position, 'x', -10, 10)
+      .name('平行光相机位置.X')
+      .onChange(() => {
+        renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
+        renderer.directionalLightCam.updateWorldMatrix()
+      })
+  lightFolder.add(renderer.directionalLightCam.position, 'y', -10, 10)
+      .name('平行光相机位置.Y')
+      .onChange(() => {
+        renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
+        renderer.directionalLightCam.updateWorldMatrix()
+      })
+  lightFolder.add(renderer.directionalLightCam.position, 'z', -10, 10)
+      .name('平行光相机位置.Z')
+      .onChange(() => {
+        renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
+        renderer.directionalLightCam.updateWorldMatrix()
+      })
   lightFolder.open()
 
   const controlsFolder = gui.addFolder('控制器')

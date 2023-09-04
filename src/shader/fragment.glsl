@@ -121,7 +121,8 @@ float PCF() {
     }
 
     float shadow = 0.0;
-    float texelSize = 1.0 / 1024.0;
+    float depthMapSize = float(textureSize(u_depthMap, 0).x);
+    float texelSize = 1.0 / depthMapSize;
     for (int x = -PCF_SIZE; x <= PCF_SIZE; ++x) {
         for (int y = -PCF_SIZE; y <= PCF_SIZE; ++y) {
             float pcfDepth = texture(u_depthMap, shadowCoord.xy + vec2(x, y) * texelSize).r;
@@ -132,12 +133,6 @@ float PCF() {
 }
 
 void main() {
-    //    vec3 shadowCoord = v_shadowTexcoord.xyz / v_shadowTexcoord.w;
-    //    shadowCoord = shadowCoord * 0.5 + 0.5;
-    //    float minDepth = texture(u_depthMap, shadowCoord.xy).r;
-    //    float currentDepth = shadowCoord.z;
-    //    bool inShdowRange = shadowCoord.x >= 0.0 && shadowCoord.x <= 1.0 && shadowCoord.y >= 0.0 && shadowCoord.y <= 1.0;
-    //    float shadow = inShdowRange && currentDepth > minDepth + SHADOW_BIAS ? 0.0 : 1.0;
     float shadow = PCF();
 
     vec3 albedo = pow(texture(u_texture, v_texcoord).rgb, vec3(GAMMA));

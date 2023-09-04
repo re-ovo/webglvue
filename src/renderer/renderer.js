@@ -16,6 +16,13 @@ export class Renderer {
         this.programs = new Map()
         this.vaos = new Map()
         this.texture = new Map()
+
+        this.directionalLightCam = new OrthographicCamera()
+        this.directionalLightCam.updateSize(20, 20)
+        this.directionalLightCam.position = new Vec3(15, 3, 3)
+        this.directionalLightCam.lookAt(new Vec3(0, 0, 0))
+        this.directionalLightCam.updateWorldMatrix()
+        this.directionalLightCam.updateProjectionMatrix()
     }
 
     getLight(type) {
@@ -25,14 +32,9 @@ export class Renderer {
     render(scene, camera) {
         const gl = this.gl
 
-        const directionalLightCam = new OrthographicCamera()
-        directionalLightCam.updateSize(20, 20)
-        directionalLightCam.position = new Vec3(15, 3, 3)
-        directionalLightCam.lookAt(new Vec3(0, 0, 0))
-        directionalLightCam.updateWorldMatrix()
-        directionalLightCam.updateProjectionMatrix()
+        let directionalLightCam = this.directionalLightCam
 
-        const depthTextureSize = 1024
+        const depthTextureSize = 1024 * 5
         const depthTexture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, depthTexture)
         gl.texImage2D(
