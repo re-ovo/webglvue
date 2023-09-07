@@ -35,7 +35,7 @@ export class Renderer {
 
         let directionalLightCam = this.directionalLightCam
 
-        const depthTextureSize = 1024 * 3
+        const depthTextureSize = 1024 * 5
         const depthTexture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, depthTexture)
         gl.texImage2D(

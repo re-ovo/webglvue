@@ -111,8 +111,7 @@ vec3 getNormal() {
     return normalize(tbn * (texture(u_normalMap, v_texcoord).rgb * 2.0 - 1.0));
 }
 
-#define SHADOW_BIAS 0.0
-#define PCF_SIZE 1
+#define PCF_SAMPLE_SIZE 4
 float CalculateShadow() {
     vec3 shadowCoord = v_shadowTexcoord.xyz / v_shadowTexcoord.w;
     shadowCoord = shadowCoord * 0.5 + 0.5;
@@ -124,25 +123,23 @@ float CalculateShadow() {
 
     float currentDepth = shadowCoord.z;
     float closestDepth = texture(u_depthMap, shadowCoord.xy).r;
+
+    // calculate bias
+    vec3 normal = getNormal();
+    vec3 lightDir = normalize(u_pointLight.position - v_fragPos);
+    float bias = max(0.001 * (1.0 - dot(normal, lightDir)), 0.0);
+
     float shadow = 0.0;
 
-    // PCSS
-    float lightSize = u_lightSize;
-    float penumbra = lightSize * (currentDepth - closestDepth) / closestDepth;
     vec2 texelSize = 1.0 / vec2(textureSize(u_depthMap, 0));
-    for(int x = -1; x <= 1; ++x)
-    {
-        for(int y = -1; y <= 1; ++y)
-        {
+    for (int x = -PCF_SAMPLE_SIZE; x <= PCF_SAMPLE_SIZE; ++x) {
+        for (int y = -PCF_SAMPLE_SIZE; y <= PCF_SAMPLE_SIZE; ++y) {
             float pcfDepth = texture(u_depthMap, shadowCoord.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0;
 
-    if(shadow < 0.0){
-        shadow = 0.0;
-    }
+    shadow /= (float(PCF_SAMPLE_SIZE) * 2.0 + 1.0) * (float(PCF_SAMPLE_SIZE) * 2.0 + 1.0);
 
     return shadow;
 }

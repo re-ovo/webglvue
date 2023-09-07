@@ -11,9 +11,7 @@ import {AmbientLight} from "./scene/light/ambient.light.js";
 import {PointLight} from "./scene/light/point.light.js";
 import {Cube} from "./scene/actor.js";
 import {Scene} from "./scene/group.js";
-import {OrthographicCamera} from "./scene/camera/orthographic.camera.js";
 import {PerspectiveCamera} from "./scene/camera/perspective.camera.js";
-import {re} from "mathjs";
 
 const containerRef = ref(null);
 
@@ -29,7 +27,8 @@ onMounted(async () => {
   const scene = new Scene();
 
   const model = await loadGlb('sofa_combination.glb')
-  model.scale.set(0.01, 0.01, 0.01)
+  const modelScale = 0.1
+  model.scale.set(modelScale, modelScale, modelScale)
   scene.add(model)
 
   const floor = new Cube()
