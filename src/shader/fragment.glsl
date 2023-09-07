@@ -38,6 +38,7 @@ uniform vec3 u_cameraPos;
 uniform AmbientLight u_ambientLight;
 uniform PointLight u_pointLight;
 uniform DirectionalLight u_directionalLight;
+uniform float u_lightSize;
 
 in vec2 v_texcoord;
 in vec3 v_normal;
@@ -110,30 +111,44 @@ vec3 getNormal() {
     return normalize(tbn * (texture(u_normalMap, v_texcoord).rgb * 2.0 - 1.0));
 }
 
-#define SHADOW_BIAS 0.0001
+#define SHADOW_BIAS 0.0
 #define PCF_SIZE 1
-float PCF() {
+float CalculateShadow() {
     vec3 shadowCoord = v_shadowTexcoord.xyz / v_shadowTexcoord.w;
     shadowCoord = shadowCoord * 0.5 + 0.5;
+
     bool inShdowRange = shadowCoord.x >= 0.0 && shadowCoord.x <= 1.0 && shadowCoord.y >= 0.0 && shadowCoord.y <= 1.0;
     if (!inShdowRange) {
-        return 1.0;
+        return 0.0;
     }
 
+    float currentDepth = shadowCoord.z;
+    float closestDepth = texture(u_depthMap, shadowCoord.xy).r;
     float shadow = 0.0;
-    float depthMapSize = float(textureSize(u_depthMap, 0).x);
-    float texelSize = 1.0 / depthMapSize;
-    for (int x = -PCF_SIZE; x <= PCF_SIZE; ++x) {
-        for (int y = -PCF_SIZE; y <= PCF_SIZE; ++y) {
+
+    // PCSS
+    float lightSize = u_lightSize;
+    float penumbra = lightSize * (currentDepth - closestDepth) / closestDepth;
+    vec2 texelSize = 1.0 / vec2(textureSize(u_depthMap, 0));
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
             float pcfDepth = texture(u_depthMap, shadowCoord.xy + vec2(x, y) * texelSize).r;
-            shadow += shadowCoord.z - SHADOW_BIAS > pcfDepth ? 0.0 : 1.0;
+            shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
         }
     }
-    return shadow / 9.0;
+    shadow /= 9.0;
+
+    if(shadow < 0.0){
+        shadow = 0.0;
+    }
+
+    return shadow;
 }
 
 void main() {
-    float shadow = PCF();
+    float shadow = CalculateShadow();
 
     vec3 albedo = pow(texture(u_texture, v_texcoord).rgb, vec3(GAMMA));
     float ao = texture(u_aoMap, v_texcoord).r;
@@ -192,7 +207,7 @@ void main() {
     }
 
     vec3 ambient = u_ambientLight.color * u_ambientLight.intensity * albedo * ao;
-    vec3 color = ambient + Lo * shadow;
+    vec3 color = ambient + Lo * (1.0 - shadow);
 
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/GAMMA));

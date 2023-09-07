@@ -167,6 +167,7 @@ onMounted(async () => {
         renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
         renderer.directionalLightCam.updateWorldMatrix()
       })
+  lightFolder.add(renderer, 'lightSize', 0.05, 3, 0.05).name('light size')
   lightFolder.open()
 
   const controlsFolder = gui.addFolder('控制器')

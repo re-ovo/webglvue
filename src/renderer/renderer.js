@@ -23,6 +23,7 @@ export class Renderer {
         this.directionalLightCam.lookAt(new Vec3(0, 0, 0))
         this.directionalLightCam.updateWorldMatrix()
         this.directionalLightCam.updateProjectionMatrix()
+        this.lightSize = 1
     }
 
     getLight(type) {
@@ -34,7 +35,7 @@ export class Renderer {
 
         let directionalLightCam = this.directionalLightCam
 
-        const depthTextureSize = 1024 * 5
+        const depthTextureSize = 1024 * 3
         const depthTexture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, depthTexture)
         gl.texImage2D(
@@ -191,6 +192,7 @@ export class Renderer {
         let useNormalMapLocation = gl.getUniformLocation(program, "u_useNormalMap")
         let worldMatrix = this.computeWorldMatrix(node)
         let opacityLocation = gl.getUniformLocation(program, "u_opacity")
+        let lightSizeLocation = gl.getUniformLocation(program, "u_lightSize")
         gl.uniformMatrix4fv(worldMatrixLocation, false, worldMatrix.to_opengl_array())
         gl.uniformMatrix4fv(viewMatrixLocation, false, camera.worldMatrixInverse.to_opengl_array())
         gl.uniformMatrix4fv(projectionMatrixLocation, false, camera.projectionMatrix.to_opengl_array())
@@ -198,6 +200,7 @@ export class Renderer {
         gl.uniform3fv(cameraPosLocation, camera.position.to_array())
         gl.uniform1i(useNormalMapLocation, node.material.normalMap ? 1 : 0)
         gl.uniform1f(opacityLocation, node.material.opacity ?? 1)
+        gl.uniform1f(lightSizeLocation, this.lightSize)
 
         // set up lights
         let ambientLight = this.getLight('AmbientLight')[0]
