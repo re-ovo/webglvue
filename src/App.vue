@@ -30,7 +30,7 @@ onMounted(async () => {
   const model = await loadGlb('sofa_combination.glb')
   const modelScale = 0.1
   model.scale.set(modelScale, modelScale, modelScale)
-  // scene.add(model)
+  scene.add(model)
 
   const floor = new Cube()
   // cube.material.color = new Vec3(1, 0, 0)
@@ -48,7 +48,7 @@ onMounted(async () => {
   cube.material.metalness = 1
   cube.position.set(0, 0, 0)
   cube.scale.set(5, 5, 5)
-  scene.add(cube)
+  // scene.add(cube)
 
   const camera = new PerspectiveCamera(
       60,

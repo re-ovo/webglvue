@@ -153,7 +153,7 @@ vec4 calculateEnvColor() {
 }
 
 void main() {
-    float shadow = 0.0;// CalculateShadow();
+    float shadow = CalculateShadow();
 
     vec3 albedo = pow(texture(u_texture, v_texcoord).rgb, vec3(GAMMA));
     float ao = texture(u_aoMap, v_texcoord).r;
