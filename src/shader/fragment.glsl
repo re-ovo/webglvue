@@ -30,6 +30,7 @@ uniform sampler2D u_aoMap;
 uniform bool u_useNormalMap;
 uniform float u_opacity;
 uniform sampler2D u_depthMap;
+uniform samplerCube u_envMap;
 
 // 相机位置
 uniform vec3 u_cameraPos;
@@ -144,8 +145,15 @@ float CalculateShadow() {
     return shadow;
 }
 
+vec4 calculateEnvColor() {
+    vec3 eyeToSurface = normalize(v_fragPos - u_cameraPos);
+    vec3 normal = getNormal();
+    vec3 reflectDir = reflect(eyeToSurface, normal);
+    return texture(u_envMap, reflectDir);
+}
+
 void main() {
-    float shadow = CalculateShadow();
+    float shadow = 0.0;// CalculateShadow();
 
     vec3 albedo = pow(texture(u_texture, v_texcoord).rgb, vec3(GAMMA));
     float ao = texture(u_aoMap, v_texcoord).r;
@@ -203,7 +211,9 @@ void main() {
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
-    vec3 ambient = u_ambientLight.color * u_ambientLight.intensity * albedo * ao;
+    vec4 envColor = calculateEnvColor();
+    // vec3 ambient = u_ambientLight.color * u_ambientLight.intensity * albedo * ao;
+    vec3 ambient = u_ambientLight.color * u_ambientLight.intensity * albedo * ao * envColor.rgb;
     vec3 color = ambient + Lo * (1.0 - shadow);
 
     color = color / (color + vec3(1.0));

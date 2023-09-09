@@ -5,6 +5,9 @@ import {OrthographicCamera} from "../scene/camera/orthographic.camera.js";
 import {Vec3} from "../math/vec3.js";
 import {Matrix4} from "../math/matrix4.js";
 import {PerspectiveCamera} from "../scene/camera/perspective.camera.js";
+import {im} from "mathjs";
+import {Cube} from "../scene/actor.js";
+import {programSource, skyboxGeo} from "../scene/skybox.js";
 
 export class Renderer {
     constructor(canvas, gl) {
@@ -24,6 +27,15 @@ export class Renderer {
         this.directionalLightCam.updateWorldMatrix()
         this.directionalLightCam.updateProjectionMatrix()
         this.lightSize = 1
+
+        fetch('StandardCubeMap.png')
+            .then(res => res.blob())
+            .then(blob => {
+                createImageBitmap(blob).then(imageBitmap => {
+                    console.log('envMap', imageBitmap)
+                    this.envMap = imageBitmap
+                })
+            })
     }
 
     getLight(type) {
@@ -90,6 +102,7 @@ export class Renderer {
             height: this.canvas.height
         })
         this.render0(scene, camera)
+        this.drawSkybox(camera)
 
         // 清理shadow map相关资源
         gl.deleteTexture(depthTexture)
@@ -108,6 +121,7 @@ export class Renderer {
 
         gl.enable(gl.DEPTH_TEST)
         gl.enable(gl.CULL_FACE)
+        gl.depthFunc(gl.LESS)
     }
 
     render0(scene, camera) {
@@ -206,6 +220,12 @@ export class Renderer {
         gl.uniform1i(useNormalMapLocation, node.material.normalMap ? 1 : 0)
         gl.uniform1f(opacityLocation, node.material.opacity ?? 1)
         gl.uniform1f(lightSizeLocation, this.lightSize)
+
+        const envMapLocation = gl.getUniformLocation(program, "u_envMap")
+        const envMapTexture = this.setupEnvMap()
+        gl.activeTexture(gl.TEXTURE0 + 8)
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, envMapTexture)
+        gl.uniform1i(envMapLocation, 8)
 
         // set up lights
         let ambientLight = this.getLight('AmbientLight')[0]
@@ -324,6 +344,7 @@ export class Renderer {
             const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, material.fragmentShader)
             program = createProgram(gl, vertexShader, fragmentShader)
             this.programs.set(material, program)
+            console.log('create program', this.programs.size)
         }
 
         return program
@@ -363,24 +384,28 @@ export class Renderer {
 
 
             // write normal data to buffer
-            let normalBuffer = gl.createBuffer()
-            gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, geometry.attributes.normal, gl.STATIC_DRAW)
-
             let normalAttributeLocation = gl.getAttribLocation(program, "a_normal")
-            gl.enableVertexAttribArray(normalAttributeLocation)
-            gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer)
-            gl.vertexAttribPointer(normalAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+            if (normalAttributeLocation !== -1) {
+                let normalBuffer = gl.createBuffer()
+                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer)
+                gl.bufferData(gl.ARRAY_BUFFER, geometry.attributes.normal, gl.STATIC_DRAW)
+
+                gl.enableVertexAttribArray(normalAttributeLocation)
+                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer)
+                gl.vertexAttribPointer(normalAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+            }
 
             // set up texture attribute
-            let textureBuffer = gl.createBuffer()
-            gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, geometry.attributes.uv, gl.STATIC_DRAW)
-
             let textureAttributeLocation = gl.getAttribLocation(program, "a_texcoord")
-            gl.enableVertexAttribArray(textureAttributeLocation)
-            gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer)
-            gl.vertexAttribPointer(textureAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+            if (textureAttributeLocation !== -1) {
+                let textureBuffer = gl.createBuffer()
+                gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer)
+                gl.bufferData(gl.ARRAY_BUFFER, geometry.attributes.uv, gl.STATIC_DRAW)
+
+                gl.enableVertexAttribArray(textureAttributeLocation)
+                gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer)
+                gl.vertexAttribPointer(textureAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+            }
 
             // index
             let indexBuffer = gl.createBuffer()
@@ -420,6 +445,82 @@ export class Renderer {
             gl.generateMipmap(gl.TEXTURE_2D)
 
             this.texture.set(image, texture)
+        }
+
+        return texture
+    }
+
+    drawSkybox(camera) {
+        const gl = this.gl
+
+        const program = this.getMaterialProgram(programSource)
+        gl.useProgram(program)
+
+        gl.depthFunc(gl.LEQUAL);
+        gl.disable(gl.CULL_FACE);
+
+        let texture = this.setupEnvMap()
+        if (!texture) {
+            return
+        }
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture)
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        gl.uniform1i(gl.getUniformLocation(program, "u_envMap"), 0)
+
+        camera.updateWorldMatrix()
+        gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_projectionMatrix"), false, camera.projectionMatrix.to_opengl_array())
+        gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_viewMatrix"), false, camera.rotationMatrixInverse.to_opengl_array())
+
+        const vao = this.getGeometryVao(program, skyboxGeo)
+        gl.bindVertexArray(vao)
+
+        gl.drawElements(gl.TRIANGLES, skyboxGeo.index.length, gl.UNSIGNED_SHORT, 0)
+    }
+
+    setupEnvMap() {
+        const gl = this.gl
+
+        if (!this.envMap) {
+            return; // 没有环境贴图
+        }
+
+        let texture = this.texture.get(this.envMap)
+
+        if (!texture) {
+            texture = gl.createTexture()
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture)
+
+            const width = this.envMap.width
+            const height = this.envMap.height
+            const size = width / 4
+
+            const faces = [
+                {target: gl.TEXTURE_CUBE_MAP_POSITIVE_X, x: size * 2, y: size},
+                {target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X, x: 0, y: size},
+                {target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y, x: size, y: 0},
+                {target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, x: size, y: size * 2},
+                {target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z, x: size, y: size},
+                {target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, x: size * 3, y: size},
+            ]
+            faces.forEach(face => {
+                let canvas = document.createElement('canvas')
+                canvas.width = size
+                canvas.height = size
+                let context = canvas.getContext('2d')
+                context.drawImage(this.envMap, face.x, face.y, size, size, 0, 0, size, size)
+                gl.texImage2D(face.target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas)
+                canvas.remove()
+            })
+            gl.generateMipmap(gl.TEXTURE_CUBE_MAP)
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+            this.texture.set(this.envMap, texture)
+            console.log('create env map texture')
         }
 
         return texture

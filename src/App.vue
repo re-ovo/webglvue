@@ -30,7 +30,7 @@ onMounted(async () => {
   const model = await loadGlb('sofa_combination.glb')
   const modelScale = 0.1
   model.scale.set(modelScale, modelScale, modelScale)
-  scene.add(model)
+  // scene.add(model)
 
   const floor = new Cube()
   // cube.material.color = new Vec3(1, 0, 0)
@@ -44,10 +44,10 @@ onMounted(async () => {
 
   const cube = new Cube()
   cube.material.color = new Vec3(1, 0, 0)
-  cube.material.roughness = 0.1
+  cube.material.roughness = 0
   cube.material.metalness = 1
-  cube.position.set(0, 2, 0)
-  cube.scale.set(0.5, 0.5, 0.5)
+  cube.position.set(0, 0, 0)
+  cube.scale.set(5, 5, 5)
   scene.add(cube)
 
   const camera = new PerspectiveCamera(
@@ -105,6 +105,7 @@ onMounted(async () => {
     // directionalLight.direction = camera.getDirection()
 
     camera.updateAspectRatio(gl.canvas.width / gl.canvas.height)
+    // camera.rotate(0.5, 0)
     camera.updateWorldMatrix()
 
     currentLocation.value = {...camera.position}

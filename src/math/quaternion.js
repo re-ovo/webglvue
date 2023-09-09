@@ -79,6 +79,10 @@ export class Quaternion {
         return result
     }
 
+    conjugate() {
+        return new Quaternion(-this.x, -this.y, -this.z, this.w)
+    }
+
     clone() {
         return new Quaternion(this.x, this.y, this.z, this.w)
     }
@@ -140,11 +144,10 @@ export class Quaternion {
             this.z = 0
             this.w = 1
         } else {
-            length = 1 / length
-            this.x = this.x * length
-            this.y = this.y * length
-            this.z = this.z * length
-            this.w = this.w * length
+            this.x = this.x / length
+            this.y = this.y / length
+            this.z = this.z / length
+            this.w = this.w / length
         }
         return this
     }

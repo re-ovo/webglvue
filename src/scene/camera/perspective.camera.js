@@ -2,7 +2,7 @@ import {Actor} from "../actor.js";
 import {Vec3} from "../../math/vec3.js";
 import {degToRad} from "three/src/math/MathUtils.js";
 import projection from "../../math/mvp/projection.js";
-import {h} from "vue";
+import {Quaternion} from "../../math/quaternion.js";
 
 export class PerspectiveCamera extends Actor {
     constructor(fov, aspect, near, far) {
@@ -57,6 +57,7 @@ export class PerspectiveCamera extends Actor {
     updateWorldMatrix() {
         super.updateWorldMatrix()
         this.worldMatrixInverse = this.worldMatrix.inverse()
+        this.rotationMatrixInverse = this.rotation.toMatrix4().inverse()
     }
 
     rotate(deltaX, deltaY, speed = 0.01) {

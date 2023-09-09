@@ -36,6 +36,14 @@ export class Vec3 {
         )
     }
 
+    normalizeAngle() {
+        return new Vec3(
+            this.x % 360,
+            this.y % 360,
+            this.z % 360
+        )
+    }
+
     cross(vector) {
         return new Vec3(
             this.y * vector.z - this.z * vector.y,
