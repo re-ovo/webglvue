@@ -18,8 +18,8 @@ export class Renderer {
         this.texture = new Map()
 
         this.directionalLightCam = new OrthographicCamera()
-        this.directionalLightCam.updateSize(20, 20)
-        this.directionalLightCam.position = new Vec3(15, 3, 3)
+        this.directionalLightCam.updateSize(100, 100)
+        this.directionalLightCam.position = new Vec3(35, 3, 3)
         this.directionalLightCam.lookAt(new Vec3(0, 0, 0))
         this.directionalLightCam.updateWorldMatrix()
         this.directionalLightCam.updateProjectionMatrix()
@@ -30,12 +30,17 @@ export class Renderer {
         return this.lights.filter(light => light.constructor.name === type)
     }
 
+    shadowLightLookAt(target) {
+        this.directionalLightCam.lookAt(target)
+        this.directionalLightCam.updateWorldMatrix()
+    }
+
     render(scene, camera) {
         const gl = this.gl
 
         let directionalLightCam = this.directionalLightCam
 
-        const depthTextureSize = 1024 * 5
+        const depthTextureSize = 1024 * 2
         const depthTexture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, depthTexture)
         gl.texImage2D(

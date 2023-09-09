@@ -125,9 +125,9 @@ float CalculateShadow() {
     float closestDepth = texture(u_depthMap, shadowCoord.xy).r;
 
     // calculate bias
-    vec3 normal = getNormal();
+    vec3 normal = v_normal;
     vec3 lightDir = normalize(u_pointLight.position - v_fragPos);
-    float bias = max(0.001 * (1.0 - dot(normal, lightDir)), 0.0);
+    float bias = max(0.002 * (1.0 - dot(normal, lightDir)), 0.00);
 
     float shadow = 0.0;
 

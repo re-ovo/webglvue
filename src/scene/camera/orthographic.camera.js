@@ -49,6 +49,9 @@ export class OrthographicCamera extends Actor {
         this.worldMatrixInverse = this.worldMatrix.inverse()
     }
 
+    updateAspectRatio(aspect) {
+    }
+
     lookAt(target) {
         let direction = target.subtract(this.position).normalize();
         let newTarget = this.position.add(direction.negate());

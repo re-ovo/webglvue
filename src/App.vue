@@ -12,6 +12,7 @@ import {PointLight} from "./scene/light/point.light.js";
 import {Cube} from "./scene/actor.js";
 import {Scene} from "./scene/group.js";
 import {PerspectiveCamera} from "./scene/camera/perspective.camera.js";
+import {OrthographicCamera} from "./scene/camera/orthographic.camera.js";
 
 const containerRef = ref(null);
 
@@ -45,9 +46,9 @@ onMounted(async () => {
   cube.material.color = new Vec3(1, 0, 0)
   cube.material.roughness = 0.1
   cube.material.metalness = 1
-  cube.position.set(0, 0, 0)
+  cube.position.set(0, 2, 0)
   cube.scale.set(0.5, 0.5, 0.5)
-  // scene.add(cube)
+  scene.add(cube)
 
   const camera = new PerspectiveCamera(
       60,
@@ -56,14 +57,14 @@ onMounted(async () => {
       10000
   )
   // const camera = new OrthographicCamera()
-  // camera.left = -2
-  // camera.right = 2
-  // camera.top = 2
-  // camera.bottom = -2
+  // camera.updateSize(100, 100)
+  // camera.position.set(35, 3, 3)
+  // camera.lookAt(new Vec3(0, 0, 0))
+  // camera.updateWorldMatrix()
   // camera.updateProjectionMatrix()
 
-  camera.position.set(15, 3, 3)
-  camera.lookAt(new Vec3(0, 0, 0))
+  camera.position.set(0, 0, 5)
+  // camera.lookAt(new Vec3(0, 0, 0))
   // camera.setTarget(new Vec3(0, 0, 0))
   camera.updateWorldMatrix()
   camera.updateProjectionMatrix()
@@ -148,25 +149,24 @@ onMounted(async () => {
   lightFolder.add(pointLight.position, 'y', -10, 10).name('点光源位置.Y')
   lightFolder.add(pointLight.position, 'z', -10, 10).name('点光源位置.Z')
   lightFolder.add(pointLight, 'intensity', 0, 3).name('点光源强度')
-  lightFolder.add(renderer.directionalLightCam.position, 'x', -10, 10)
-      .name('平行光相机位置.X')
+
+  const lightTarget = new Vec3(0, 0, 0)
+
+  lightFolder.add(lightTarget, 'x', -15, 15)
+      .name('点光源目标.X')
       .onChange(() => {
-        renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
-        renderer.directionalLightCam.updateWorldMatrix()
+        renderer.shadowLightLookAt(lightTarget)
       })
-  lightFolder.add(renderer.directionalLightCam.position, 'y', -10, 10)
-      .name('平行光相机位置.Y')
+  lightFolder.add(lightTarget, 'y', 0, 3)
+      .name('点光源目标.Y')
       .onChange(() => {
-        renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
-        renderer.directionalLightCam.updateWorldMatrix()
+        renderer.shadowLightLookAt(lightTarget)
       })
-  lightFolder.add(renderer.directionalLightCam.position, 'z', -10, 10)
-      .name('平行光相机位置.Z')
+  lightFolder.add(lightTarget, 'z', -5, 5)
+      .name('点光源目标.Z')
       .onChange(() => {
-        renderer.directionalLightCam.lookAt(new Vec3(0, 0, 0))
-        renderer.directionalLightCam.updateWorldMatrix()
+        renderer.shadowLightLookAt(lightTarget)
       })
-  lightFolder.add(renderer, 'lightSize', 0.05, 3, 0.05).name('light size')
   lightFolder.open()
 
   const controlsFolder = gui.addFolder('控制器')
