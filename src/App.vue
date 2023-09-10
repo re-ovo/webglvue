@@ -27,8 +27,8 @@ onMounted(async () => {
   const renderer = new Renderer(containerRef.value, gl)
   const scene = new Scene();
 
-  const model = await loadGlb('sofa_combination.glb')
-  const modelScale = 0.1
+  const model = await loadGlb('vans_old_skool_green.glb')
+  const modelScale = 1
   model.scale.set(modelScale, modelScale, modelScale)
   scene.add(model)
 
@@ -40,7 +40,7 @@ onMounted(async () => {
   floor.scale.set(5, 0.01, 5)
   // cube.lookAt(new Vec3(0, 1, 1))
   floor.updateWorldMatrix()
-  // scene.add(floor)
+  scene.add(floor)
 
   const cube = new Cube()
   cube.material.color = new Vec3(1, 0, 0)
